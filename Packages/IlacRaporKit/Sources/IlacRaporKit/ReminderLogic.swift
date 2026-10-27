@@ -56,17 +56,4 @@ public enum ReminderLogic {
         let start = calendar.startOfDay(for: previousEndDate)
         return calendar.date(byAdding: .year, value: 1, to: start) ?? start
     }
-
-    // MARK: - Metinler
-
-    /// Satırdaki durum rozeti metni. Durum renkle birlikte metinle de gösterilir (erişilebilirlik).
-    public static func statusText(daysRemaining: Int, isHandled: Bool) -> String {
-        if isHandled { return "Yeni tarih bekleniyor" }
-        switch daysRemaining {
-        case ..<0: return "\(-daysRemaining) gün geçti"
-        case 0: return "Bugün bitiyor"
-        case 1: return "Yarın bitiyor"
-        default: return "\(daysRemaining) gün kaldı"
-        }
-    }
 }
