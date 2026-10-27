@@ -29,7 +29,8 @@ struct PersonNameSuggesterTests {
 
     @Test func exactMatchIsNotSuggested() {
         let u = [NameUsage(name: "Babam", usedAt: date(2026, 1, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "babam", from: u).isEmpty)
+        #expect(PersonNameSuggester.suggestions(for: "Babam", from: u).isEmpty)
+        #expect(PersonNameSuggester.suggestions(for: "babam", from: u) == ["Babam"])  // offers the saved spelling
     }
 
     @Test func latestFirstAndEmptyIgnored() {
@@ -50,7 +51,8 @@ struct PersonNameSuggesterTests {
 
     @Test func diacriticsAreIgnored() {
         let u = [NameUsage(name: "Şükrü", usedAt: date(2026, 1, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u).isEmpty)   // exact match
+        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u) == ["Şükrü"])  // full loose match
+        #expect(PersonNameSuggester.suggestions(for: "Şükrü", from: u).isEmpty)        // exact spelling
         #expect(PersonNameSuggester.suggestions(for: "suk", from: u) == ["Şükrü"])
     }
 

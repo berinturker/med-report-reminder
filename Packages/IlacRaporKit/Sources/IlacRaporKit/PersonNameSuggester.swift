@@ -21,9 +21,11 @@ public enum PersonNameSuggester {
     }
 
     /// Unique names that start with `typed`, latest use first.
-    /// Comparison uses a loose key (see `foldKey`).
+    /// Comparison uses a loose key (see `foldKey`). A name is hidden only when
+    /// `typed` is already its exact saved spelling, so "sukru" still offers "Şükrü".
     public static func suggestions(for typed: String, from usages: [NameUsage]) -> [String] {
         let key = foldKey(typed)
+        let typedName = normalize(typed)
 
         var latest: [String: NameUsage] = [:]
         for usage in usages {
@@ -35,7 +37,7 @@ public enum PersonNameSuggester {
         }
 
         return latest
-            .filter { nameKey, _ in nameKey.hasPrefix(key) && nameKey != key }
+            .filter { nameKey, usage in nameKey.hasPrefix(key) && usage.name != typedName }
             .map(\.value)
             .sorted { $0.usedAt > $1.usedAt }
             .map(\.name)

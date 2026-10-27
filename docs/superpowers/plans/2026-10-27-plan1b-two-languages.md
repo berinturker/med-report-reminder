@@ -307,7 +307,7 @@ Fold rule (spec 10), used for both the prefix match and the duplicate check:
 
     @Test func diacriticsAreIgnored() {
         let u = [NameUsage(name: "Şükrü", usedAt: date(2026, 1, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u).isEmpty)   // exact match
+        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u) == ["Şükrü"])  // full loose match (changed in final review)
         #expect(PersonNameSuggester.suggestions(for: "suk", from: u) == ["Şükrü"])
     }
 

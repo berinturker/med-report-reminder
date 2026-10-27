@@ -482,6 +482,7 @@ For an existing medication, the form also has "Takibi durdur" and "İlacı sil".
 - The field shows the suggestions that start with the text that the user types.
 - The comparison does not depend on the app language. It uses a loose key: lowercase, then "ı", "İ", "I" and "i" are the same letter, then all diacritics are removed ("Şükrü" → "sukru"). Reason: the language of a name is not known, and an extra suggestion does no harm.
 - Two names with the same loose key are the same name ("Şule" and "Sule").
+- A name is not suggested only when the typed text is already its exact saved spelling. Thus, "sukru" offers "Şükrü", and "babam" offers "Babam".
 
 ---
 
