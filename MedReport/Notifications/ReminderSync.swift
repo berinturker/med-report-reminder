@@ -25,12 +25,31 @@ final class ReminderSync {
         self.beginBackgroundTask = beginBackgroundTask
     }
 
-    /// Entry point for the app.
+    /// The last queued sync. Syncs run one at a time: `replaceAll` awaits between adds, and two
+    /// interleaved syncs could leave stale or more than 64 pending notifications (final review I1).
+    private var tail: Task<Void, Never>?
+
+    /// Entry point for the app. `now` is read when this sync starts, not when it is queued.
     func sync() async {
-        await sync(now: Date(), calendar: Calendar.current)
+        await enqueue { await $0.run(now: Date(), calendar: Calendar.current) }
     }
 
     func sync(now: Date, calendar: Calendar) async {
+        await enqueue { await $0.run(now: now, calendar: calendar) }
+    }
+
+    /// Runs `work` after all earlier syncs and returns when it is done.
+    private func enqueue(_ work: @escaping @MainActor (ReminderSync) async -> Void) async {
+        let previous = tail
+        let task = Task { [self] in
+            await previous?.value
+            await work(self)
+        }
+        tail = task
+        await task.value
+    }
+
+    private func run(now: Date, calendar: Calendar) async {
         let endBackgroundTask = beginBackgroundTask()
         defer { endBackgroundTask() }
         let context = container.mainContext
