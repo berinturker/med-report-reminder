@@ -9,5 +9,16 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
-      - name: Run IlacRaporKit tests
-        run: swift test --package-path Packages/IlacRaporKit
+      - name: Run MedReportKit tests
+        run: swift test --package-path Packages/MedReportKit
+
+  app-tests:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Run app tests
+        run: ./scripts/ci-app-tests.sh

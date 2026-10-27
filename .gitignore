@@ -5,3 +5,6 @@ DerivedData/
 build/
 .build/
 .swiftpm/
+*.xcodeproj/
+Config/Local.xcconfig
+MedReport/Info.plist
