@@ -138,3 +138,21 @@ struct NotificationPlannerPlanTests {
         #expect(all.first!.identifier == "snooze-\(uuid(1).uuidString)")
     }
 }
+
+@Suite("NotificationPlanner — invalid settings")
+struct NotificationPlannerInvalidSettingsTests {
+    @Test func outOfRangeTimeIsClampedAndTerminates() {
+        let settings = PlannerSettings(notificationHour: 24, notificationMinute: 60)
+        let all = NotificationPlanner.plan(items: [report(1, end: date(2026, 11, 5))],
+                                           now: date(2026, 10, 27, 12), settings: settings, calendar: istanbul)
+        #expect(all.count == 64)
+        #expect(all.first!.fireDate == date(2026, 10, 27, 23, 59))
+    }
+
+    @Test func negativeTimeIsClamped() {
+        let settings = PlannerSettings(notificationHour: -1, notificationMinute: -5)
+        let first = NotificationPlanner.plan(items: [report(1, end: date(2026, 11, 5))],
+                                             now: date(2026, 10, 27, 12), settings: settings, calendar: istanbul).first!
+        #expect(first.fireDate == date(2026, 10, 28, 0, 0))
+    }
+}

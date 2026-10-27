@@ -96,8 +96,8 @@ public enum NotificationPlanner {
         while result.count < limit {
             defer { offset += 1 }
             guard let day = calendar.date(byAdding: .day, value: offset, to: startDay),
-                  let fire = fireDate(on: day, settings: settings, calendar: calendar),
-                  fire > now else { continue }
+                  let fire = fireDate(on: day, settings: settings, calendar: calendar) else { break }
+            guard fire > now else { continue }
             result.append(makeNotification(item, identifier: "\(prefix)-\(item.id.uuidString)-\(dayStamp(fire, calendar))",
                                            fireDate: fire, calendar: calendar))
         }
@@ -116,8 +116,8 @@ public enum NotificationPlanner {
         while result.count < limit {
             defer { k += 1 }
             guard let day = calendar.date(byAdding: .day, value: k * renewalIntervalDays, to: base),
-                  let fire = fireDate(on: day, settings: settings, calendar: calendar),
-                  fire > now else { continue }
+                  let fire = fireDate(on: day, settings: settings, calendar: calendar) else { break }
+            guard fire > now else { continue }
             result.append(makeNotification(item, identifier: "renewal-\(item.id.uuidString)-\(dayStamp(fire, calendar))",
                                            fireDate: fire, calendar: calendar))
         }
@@ -125,9 +125,12 @@ public enum NotificationPlanner {
     }
 
     /// The notification time on `day`. A time that does not exist (daylight saving) moves forward.
+    /// An hour outside 0...23 or a minute outside 0...59 is clamped into the range.
     static func fireDate(on day: Date, settings: PlannerSettings, calendar: Calendar) -> Date? {
-        calendar.date(bySettingHour: settings.notificationHour, minute: settings.notificationMinute, second: 0,
-                      of: day, matchingPolicy: .nextTime, repeatedTimePolicy: .first, direction: .forward)
+        let hour = min(max(settings.notificationHour, 0), 23)
+        let minute = min(max(settings.notificationMinute, 0), 59)
+        return calendar.date(bySettingHour: hour, minute: minute, second: 0,
+                             of: day, matchingPolicy: .nextTime, repeatedTimePolicy: .first, direction: .forward)
     }
 
     /// `yyyyMMdd` in the calendar's time zone.
