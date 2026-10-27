@@ -3,7 +3,9 @@
 - **Date:** 27 October 2026
 - **Status:** Approved design. Written to the ASD-STE100 rules.
 - **Source:** `PLAN.md` (the first plan) and the brainstorming session of 27 October 2026.
-- **Language of the app:** Turkish. All user text in this document is in Turkish.
+- **Language of the app:** English is the base language. Turkish is a translation. The app uses Turkish when the device language is Turkish, and English for all other languages (D10).
+- **Language of the project:** All code, comments, test names, documents and commit messages are in English.
+- **User text in this document:** Screen text in sections 9 and 13 is shown in Turkish (the first user's language). The English text has the same meaning. The notification and status text has both languages (6.6, 7.3).
 
 ---
 
@@ -48,6 +50,8 @@ After the user enters a report or a medication, the user does not miss an end da
 | D7 | The architecture is MV with pure services. The forms use small `@Observable` models. | `@Query` operates only in views. The difficult logic is in pure services. |
 | D8 | A handled report gets a notification every 3 days. | Without this, the app is silent forever if the user forgets the new date. |
 | D9 | The visual style is similar to Cal AI, Apple Health and Gentler Streak. | Large numbers, high contrast, cards. Color shows only the state. |
+| D10 | The app has two languages: English (base) and Turkish. The device language selects the language. | App Store compatibility. The first user still sees Turkish. |
+| D11 | The Domain layer receives the language as a parameter (`AppLanguage`). The notification and status text tables are Swift code in the Domain package, not a String Catalog. | The tests run on Linux and in CI. The functions stay pure. |
 
 ---
 
@@ -95,7 +99,8 @@ After the user enters a report or a medication, the user does not miss an end da
 - **UI:** SwiftUI.
 - **Data:** SwiftData, local only.
 - **Notifications:** `UserNotifications`, local only.
-- **Text:** A String Catalog (`Localizable.xcstrings`). Thus, a new language is easy to add later.
+- **Text:** Screen text uses a String Catalog (`Localizable.xcstrings`) with English as the development language and a Turkish translation. Notification and status text uses the tables in the Domain package (D11).
+- **Language selection:** `AppLanguage.current(preferredLanguages:)` gives `.tr` when the first preferred language starts with `tr`, else `.en`. Only the app layer reads `Locale.preferredLanguages`.
 - **Privacy manifest:** `PrivacyInfo.xcprivacy`. It declares no data collection. It declares the `UserDefaults` API with the reason code `CA92.1`.
 - **Fonts:** SF Pro Rounded for numbers and headings. SF Pro for body text.
 
@@ -117,7 +122,9 @@ All functions in this layer are pure. A pure function always gives the same resu
 
 | Component | Function |
 |---|---|
-| `ReminderLogic` | Calculates days, states, end dates and status text. |
+| `AppLanguage` | An enum: `en`, `tr`. Selects the text table and the case rules. |
+| `ReminderLogic` | Calculates days, states and end dates. |
+| `StatusText` | Gives the status badge text for a language (6.6). |
 | `ReminderItem` | A value type. It contains a copy of the data from one report or one medication. |
 | `NotificationPlanner` | Receives a list of `ReminderItem` values, `now`, the settings and a `Calendar`. Gives a list of `PlannedNotification` values. |
 | `PlannedNotification` | A value type: identifier, fire date, title, body, category and item reference. |
@@ -233,12 +240,23 @@ These values are not saved:
 
 ### 6.6 `ReminderState`
 
-| State | Condition | Color | Text |
-|---|---|---|---|
-| `handled` | `isHandled` is true | Gray | "Yeni tarih bekleniyor" |
-| `overdue` | days remaining < 0 | Red | "N gün geçti" |
-| `reminding` | 0 ≤ days remaining ≤ `leadDays` | Orange | "Bugün bitiyor", "Yarın bitiyor", "N gün kaldı" |
-| `normal` | days remaining > `leadDays` | Green | "N gün kaldı" |
+| State | Condition | Color |
+|---|---|---|
+| `handled` | `isHandled` is true | Gray |
+| `overdue` | days remaining < 0 | Red |
+| `reminding` | 0 ≤ days remaining ≤ `leadDays` | Orange |
+| `normal` | days remaining > `leadDays` | Green |
+
+**Status text** (`StatusText`):
+
+| Situation | English | Turkish |
+|---|---|---|
+| Handled | "Waiting for new date" | "Yeni tarih bekleniyor" |
+| Overdue, N = 1 | "1 day overdue" | "1 gün geçti" |
+| Overdue, N > 1 | "{N} days overdue" | "{N} gün geçti" |
+| 0 days | "Ends today" | "Bugün bitiyor" |
+| 1 day | "Ends tomorrow" | "Yarın bitiyor" |
+| N > 1 days | "{N} days left" | "{N} gün kaldı" |
 
 The app checks the conditions in this order. A negative `leadDays` operates as 0.
 
@@ -264,6 +282,25 @@ The app checks the conditions in this order. A negative `leadDays` operates as 0
 
 The planner calculates the text for the **fire date**, not for `now`.
 
+The planner receives the language (`AppLanguage`) as a parameter.
+
+**English:**
+
+| Situation | Title | Body |
+|---|---|---|
+| Report, days remaining > 1 | "{title} ends in {N} days" | "For {person}. Remember to book an appointment." |
+| Report, 1 day | "{title} ends tomorrow" | same |
+| Report, 0 days | "{title} ends today" | same |
+| Report, overdue | "{title}: expired" | "Ended {N} day ago." (N = 1) / "Ended {N} days ago." |
+| Report, handled | "{title}: enter the new end date" | "If the report is in the system, save the date." |
+| Medication, days remaining > 1 | "Your {name} runs out in {N} days" | "Remember to get a new box from the pharmacy." |
+| Medication, 1 day | "Your {name} runs out tomorrow" | same |
+| Medication, 0 days | "Your {name} runs out today" | same |
+| Medication, overdue | "Your {name} has run out" | "Ran out {N} day ago." (N = 1) / "Ran out {N} days ago." |
+| Backup | "Keep your reminders going" | "Open the app once to keep your reminders going." |
+
+**Turkish:**
+
 | Situation | Title | Body |
 |---|---|---|
 | Report, days remaining > 1 | "{title} {N} gün sonra bitiyor" | "{person} için. Randevu almayı unutma." |
@@ -277,7 +314,7 @@ The planner calculates the text for the **fire date**, not for `now`.
 | Medication, overdue | "{name} ilacın bitti" | "{N} gün önce bitti." |
 | Backup | "Hatırlatmalar devam etsin" | "Hatırlatmaların devam etmesi için uygulamayı bir kez aç." |
 
-If the person name is empty, the body does not show "{person} için."
+If the person name is empty, the body does not show the person part ("For {person}. " or "{person} için. ").
 
 ### 7.4 The 64-notification limit
 
@@ -442,7 +479,7 @@ For an existing medication, the form also has "Takibi durdur" and "İlacı sil".
 - The app trims spaces at the start and at the end of a name before it saves.
 - The suggestions are the unique person names from all reports and medications.
 - Two names are the same if they are equal when the app ignores letter case. The suggestion shows the most recent spelling.
-- The field shows the suggestions that start with the text that the user types. The comparison ignores letter case and uses the Turkish locale ("i" and "İ").
+- The field shows the suggestions that start with the text that the user types. The comparison ignores letter case with the case rules of the app language: Turkish rules ("i/İ", "ı/I") for `.tr`, standard rules for `.en`.
 
 ---
 
@@ -493,9 +530,11 @@ For an existing medication, the form also has "Takibi durdur" and "İlacı sil".
 
 | Component | Test cases |
 |---|---|
-| `ReminderLogic` | Day count across midnight. Daylight saving time. 29 February. Year boundary. State boundaries. Negative `leadDays`. Status text. |
+| `ReminderLogic` | Day count across midnight. Daylight saving time. 29 February. Year boundary. State boundaries. Negative `leadDays`. |
+| `AppLanguage` | Language selection from preferred languages ("tr-TR" → `.tr`, "en-US" → `.en`, "de-DE" → `.en`, empty → `.en`). |
+| `StatusText`, `NotificationText` | All cases in 6.6 and 7.3 in both languages. English singular and plural. |
 | `NotificationPlanner` | Never more than 64. Ten items in the reminder window. Same-date sort by priority. Text for the fire date. Backup on the day after the last kept notification. No backup when there are no candidates. Handled report every 3 days. Snooze in the future and in the past. Notification time already past today. Reminder start date in the past. Empty person name. |
-| `PersonNameSuggester` | Trims spaces. Ignores letter case. Turkish "i" and "İ". Removes duplicates. |
+| `PersonNameSuggester` | Trims spaces. Ignores letter case. Turkish "i" and "İ" for `.tr`. Standard "I" and "i" for `.en`. Removes duplicates. |
 | `ReminderItem` mapping | Medication of an archived report. Person name from the report. Archived items are not included. |
 
 ### 14.3 Integration tests
@@ -567,6 +606,7 @@ The draft code of 27 October 2026 needs these changes:
 2. Add `isArchived` and `snoozeUntil` to `Report` and `Medication`.
 3. Put the models in `SchemaV1`.
 4. Remove the default `Date()` and `Calendar.current` parameters from the functions that the Domain layer calls. The models can keep them for the views.
+5. Change all Turkish comments, test names and documents to English. `KURULUM.md` becomes `SETUP.md`.
 
 ---
 
