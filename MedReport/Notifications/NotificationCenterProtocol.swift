@@ -16,8 +16,10 @@ final class SystemNotificationCenter: NotificationCenterProtocol {
     func add(_ request: UNNotificationRequest) async throws {
         // The completion-handler API is called synchronously on the main actor,
         // so the non-Sendable request never crosses an isolation boundary (Swift 6).
+        // The handler is @Sendable: iOS calls it on a background queue, and a main-actor
+        // closure there traps at run time.
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
-            UNUserNotificationCenter.current().add(request) { error in
+            UNUserNotificationCenter.current().add(request) { @Sendable error in
                 if let error { continuation.resume(throwing: error) } else { continuation.resume() }
             }
         }

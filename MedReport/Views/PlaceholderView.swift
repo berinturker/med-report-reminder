@@ -44,7 +44,7 @@ struct PlaceholderView: View {
 
     private func requestPermission() async {
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { @Sendable _, _ in
                 continuation.resume()
             }
         }
@@ -62,7 +62,7 @@ struct PlaceholderView: View {
 
     private func reload() async {
         rows = await withCheckedContinuation { (continuation: CheckedContinuation<[PendingRow], Never>) in
-            UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            UNUserNotificationCenter.current().getPendingNotificationRequests { @Sendable requests in
                 let rows = requests.map { request in
                     let next = (request.trigger as? UNCalendarNotificationTrigger)?.nextTriggerDate()
                         ?? (request.trigger as? UNTimeIntervalNotificationTrigger)?.nextTriggerDate()
