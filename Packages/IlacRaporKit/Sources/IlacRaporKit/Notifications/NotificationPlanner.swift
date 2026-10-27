@@ -21,6 +21,41 @@ public enum NotificationPlanner {
     /// A handled report gets one notification every 3 days.
     public static let renewalIntervalDays = 3
 
+    // MARK: - Full plan
+
+    /// All notifications to schedule. Never more than `maxPending`.
+    /// Order: fire date, then the item state priority on that date, then identifier.
+    public static func plan(
+        items: [ReminderItem], now: Date,
+        settings: PlannerSettings, calendar: Calendar
+    ) -> [PlannedNotification] {
+        let ranked = items.flatMap { item in
+            candidates(for: item, now: now, settings: settings, calendar: calendar).map { notification in
+                (notification: notification,
+                 priority: item.state(now: notification.fireDate, calendar: calendar).sortPriority)
+            }
+        }
+        .sorted { a, b in
+            if a.notification.fireDate != b.notification.fireDate { return a.notification.fireDate < b.notification.fireDate }
+            if a.priority != b.priority { return a.priority < b.priority }
+            return a.notification.identifier < b.notification.identifier
+        }
+
+        var kept = ranked.prefix(maxPending - 1).map(\.notification)
+        if let last = kept.last, let backup = backupNotification(after: last.fireDate, settings: settings, calendar: calendar) {
+            kept.append(backup)
+        }
+        return kept
+    }
+
+    private static func backupNotification(after date: Date, settings: PlannerSettings, calendar: Calendar) -> PlannedNotification? {
+        guard let nextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date)),
+              let fire = fireDate(on: nextDay, settings: settings, calendar: calendar) else { return nil }
+        let content = NotificationText.backup
+        return PlannedNotification(identifier: "backup", fireDate: fire, title: content.title, body: content.body,
+                                   category: content.category, itemKind: nil, itemID: nil)
+    }
+
     // MARK: - Candidates for one item
 
     static func candidates(

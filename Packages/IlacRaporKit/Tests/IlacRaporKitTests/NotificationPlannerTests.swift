@@ -81,3 +81,60 @@ struct NotificationPlannerCandidateTests {
         #expect(berlin.component(.day, from: dstDay[0].fireDate) == 29)
     }
 }
+
+@Suite("NotificationPlanner — plan")
+struct NotificationPlannerPlanTests {
+    let now = date(2026, 10, 27, 12)
+
+    private func p(_ items: [ReminderItem]) -> [PlannedNotification] {
+        NotificationPlanner.plan(items: items, now: now, settings: tenAM, calendar: istanbul)
+    }
+
+    @Test func noItemsNoBackup() {
+        #expect(p([]).isEmpty)
+    }
+
+    @Test func singleItemIs63PlusBackup() {
+        let all = p([report(1, end: date(2026, 11, 5))])
+        #expect(all.count == 64)
+        #expect(all.last!.identifier == "backup")
+        #expect(all.last!.fireDate == date(2026, 12, 30, 10))
+        #expect(all.last!.category == .backup)
+        #expect(all.last!.itemID == nil)
+    }
+
+    @Test func tenItemsNeverAbove64() {
+        let items = (1...10).map { report($0, end: date(2026, 10, 20)) }
+        let all = p(items)
+        #expect(all.count == 64)
+        #expect(zip(all, all.dropFirst()).allSatisfy { $0.fireDate <= $1.fireDate })
+        #expect(all.prefix(10).allSatisfy { $0.fireDate == date(2026, 10, 28, 10) })
+    }
+
+    @Test func seventyItemsKeepEarliest() {
+        let items = (1...70).map { report($0, end: date(2026, 10, 20)) }
+        let all = p(items)
+        #expect(all.count == 64)
+        #expect(all.prefix(63).allSatisfy { $0.fireDate == date(2026, 10, 28, 10) })
+        #expect(all.last!.fireDate == date(2026, 10, 29, 10))
+    }
+
+    @Test func overdueComesFirstOnSameDate() {
+        let reminding = medication(1, end: date(2026, 11, 1))      // reminding on 28 Oct
+        let overdue = report(2, end: date(2026, 10, 20))           // overdue on 28 Oct
+        let all = p([reminding, overdue])
+        #expect(all[0].itemID == uuid(2))
+        #expect(all[1].itemID == uuid(1))
+    }
+
+    @Test func samePrioritySortsByIdentifier() {
+        let all = p([report(2, end: date(2026, 10, 20)), report(1, end: date(2026, 10, 20))])
+        #expect(all[0].itemID == uuid(1))
+        #expect(all[1].itemID == uuid(2))
+    }
+
+    @Test func snoozeStaysAfterReplan() {
+        let all = p([report(1, end: date(2026, 11, 5), snooze: date(2026, 10, 27, 15))])
+        #expect(all.first!.identifier == "snooze-\(uuid(1).uuidString)")
+    }
+}
