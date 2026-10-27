@@ -14,7 +14,13 @@ protocol NotificationCenterProtocol: AnyObject {
 @MainActor
 final class SystemNotificationCenter: NotificationCenterProtocol {
     func add(_ request: UNNotificationRequest) async throws {
-        try await UNUserNotificationCenter.current().add(request)
+        // The completion-handler API is called synchronously on the main actor,
+        // so the non-Sendable request never crosses an isolation boundary (Swift 6).
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error { continuation.resume(throwing: error) } else { continuation.resume() }
+            }
+        }
     }
 
     func removeAllPendingNotificationRequests() {
