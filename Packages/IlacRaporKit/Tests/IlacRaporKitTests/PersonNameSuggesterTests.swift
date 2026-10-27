@@ -20,7 +20,7 @@ struct PersonNameSuggesterTests {
         #expect(PersonNameSuggester.suggestions(for: "bab", from: u) == ["Babam"])
     }
 
-    @Test func turkishDottedAndDotlessI() {
+    @Test func turkishCaseRulesStillMatch() {
         let u = [NameUsage(name: "İlknur", usedAt: date(2026, 1, 1)),
                  NameUsage(name: "Irmak", usedAt: date(2026, 2, 1))]
         #expect(PersonNameSuggester.suggestions(for: "il", from: u) == ["İlknur"])
@@ -37,5 +37,26 @@ struct PersonNameSuggesterTests {
                  NameUsage(name: "  ", usedAt: date(2026, 3, 1)),
                  NameUsage(name: "Ablam", usedAt: date(2026, 2, 1))]
         #expect(PersonNameSuggester.suggestions(for: "", from: u) == ["Ablam", "Annem"])
+    }
+
+    @Test func dotlessAndDottedIAreTheSameLetter() {
+        let u = [NameUsage(name: "Irene", usedAt: date(2026, 1, 1)),
+                 NameUsage(name: "Irmak", usedAt: date(2026, 2, 1)),
+                 NameUsage(name: "İlknur", usedAt: date(2026, 3, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "ir", from: u) == ["Irmak", "Irene"])
+        #expect(PersonNameSuggester.suggestions(for: "ır", from: u) == ["Irmak", "Irene"])
+        #expect(PersonNameSuggester.suggestions(for: "İl", from: u) == ["İlknur"])
+    }
+
+    @Test func diacriticsAreIgnored() {
+        let u = [NameUsage(name: "Şükrü", usedAt: date(2026, 1, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u).isEmpty)   // exact match
+        #expect(PersonNameSuggester.suggestions(for: "suk", from: u) == ["Şükrü"])
+    }
+
+    @Test func looseDuplicatesMerge() {
+        let u = [NameUsage(name: "Sule", usedAt: date(2026, 1, 1)),
+                 NameUsage(name: "Şule", usedAt: date(2026, 2, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "", from: u) == ["Şule"])
     }
 }

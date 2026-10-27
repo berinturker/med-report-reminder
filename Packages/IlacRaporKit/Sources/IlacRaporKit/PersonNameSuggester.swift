@@ -21,7 +21,7 @@ public enum PersonNameSuggester {
     }
 
     /// Unique names that start with `typed`, latest use first.
-    /// Comparison ignores letter case with Turkish rules ("i/İ", "ı/I").
+    /// Comparison uses a loose key (see `foldKey`).
     public static func suggestions(for typed: String, from usages: [NameUsage]) -> [String] {
         let key = foldKey(typed)
 
@@ -41,7 +41,13 @@ public enum PersonNameSuggester {
             .map(\.name)
     }
 
+    /// Loose key (spec 10): lowercase with Turkish rules ("I" → "ı", "İ" → "i"),
+    /// make "ı" the same as "i", then remove diacritics ("ş" → "s", "ü" → "u").
+    /// It does not depend on the app language, because the language of a name is not known.
     private static func foldKey(_ text: String) -> String {
-        normalize(text).lowercased(with: turkish)
+        normalize(text)
+            .lowercased(with: turkish)
+            .replacingOccurrences(of: "ı", with: "i")
+            .folding(options: .diacriticInsensitive, locale: turkish)
     }
 }
