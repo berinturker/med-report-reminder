@@ -4,10 +4,12 @@ import Foundation
 public struct PlannerSettings: Sendable, Equatable {
     public var notificationHour: Int
     public var notificationMinute: Int
+    public var language: AppLanguage
 
-    public init(notificationHour: Int, notificationMinute: Int) {
+    public init(notificationHour: Int, notificationMinute: Int, language: AppLanguage) {
         self.notificationHour = notificationHour
         self.notificationMinute = notificationMinute
+        self.language = language
     }
 }
 
@@ -51,7 +53,7 @@ public enum NotificationPlanner {
     private static func backupNotification(after date: Date, settings: PlannerSettings, calendar: Calendar) -> PlannedNotification? {
         guard let nextDay = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: date)),
               let fire = fireDate(on: nextDay, settings: settings, calendar: calendar) else { return nil }
-        let content = NotificationText.backup
+        let content = NotificationText.backup(language: settings.language)
         return PlannedNotification(identifier: "backup", fireDate: fire, title: content.title, body: content.body,
                                    category: content.category, itemKind: nil, itemID: nil)
     }
@@ -65,7 +67,7 @@ public enum NotificationPlanner {
         var snooze: PlannedNotification?
         if let snoozeUntil = item.snoozeUntil, snoozeUntil > now {
             snooze = makeNotification(item, identifier: "snooze-\(item.id.uuidString)",
-                                      fireDate: snoozeUntil, calendar: calendar)
+                                      fireDate: snoozeUntil, calendar: calendar, language: settings.language)
         }
 
         let dailyLimit = maxPerItem - (snooze == nil ? 0 : 1)
@@ -99,7 +101,7 @@ public enum NotificationPlanner {
                   let fire = fireDate(on: day, settings: settings, calendar: calendar) else { break }
             guard fire > now else { continue }
             result.append(makeNotification(item, identifier: "\(prefix)-\(item.id.uuidString)-\(dayStamp(fire, calendar))",
-                                           fireDate: fire, calendar: calendar))
+                                           fireDate: fire, calendar: calendar, language: settings.language))
         }
         return result
     }
@@ -119,7 +121,7 @@ public enum NotificationPlanner {
                   let fire = fireDate(on: day, settings: settings, calendar: calendar) else { break }
             guard fire > now else { continue }
             result.append(makeNotification(item, identifier: "renewal-\(item.id.uuidString)-\(dayStamp(fire, calendar))",
-                                           fireDate: fire, calendar: calendar))
+                                           fireDate: fire, calendar: calendar, language: settings.language))
         }
         return result
     }
@@ -140,9 +142,9 @@ public enum NotificationPlanner {
     }
 
     private static func makeNotification(
-        _ item: ReminderItem, identifier: String, fireDate: Date, calendar: Calendar
+        _ item: ReminderItem, identifier: String, fireDate: Date, calendar: Calendar, language: AppLanguage
     ) -> PlannedNotification {
-        let content = NotificationText.content(for: item, fireDate: fireDate, calendar: calendar)
+        let content = NotificationText.content(for: item, fireDate: fireDate, calendar: calendar, language: language)
         return PlannedNotification(identifier: identifier, fireDate: fireDate,
                                    title: content.title, body: content.body, category: content.category,
                                    itemKind: item.kind, itemID: item.id)

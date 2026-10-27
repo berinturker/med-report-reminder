@@ -75,7 +75,7 @@ struct NotificationPlannerCandidateTests {
         let berlin = calendar("Europe/Berlin")
         let all = c(report(1, end: date(2026, 4, 5, in: berlin)),
                     now: date(2026, 3, 20, 12, in: berlin),
-                    settings: PlannerSettings(notificationHour: 2, notificationMinute: 30), cal: berlin)
+                    settings: PlannerSettings(notificationHour: 2, notificationMinute: 30, language: .tr), cal: berlin)
         let dstDay = all.filter { $0.identifier.hasSuffix("-20260329") }
         #expect(dstDay.count == 1)
         #expect(berlin.component(.day, from: dstDay[0].fireDate) == 29)
@@ -137,12 +137,24 @@ struct NotificationPlannerPlanTests {
         let all = p([report(1, end: date(2026, 11, 5), snooze: date(2026, 10, 27, 15))])
         #expect(all.first!.identifier == "snooze-\(uuid(1).uuidString)")
     }
+
+    @Test func planUsesSettingsLanguage() {
+        var english = tenAM
+        english.language = .en
+        let item = report(1, title: "Blood pressure report", end: date(2026, 11, 5))
+        let tr = NotificationPlanner.plan(items: [item], now: now, settings: tenAM, calendar: istanbul)
+        let en = NotificationPlanner.plan(items: [item], now: now, settings: english, calendar: istanbul)
+        #expect(tr.first!.title == "Blood pressure report 8 gün sonra bitiyor")
+        #expect(en.first!.title == "Blood pressure report ends in 8 days")
+        #expect(en.last!.title == "Keep your reminders going")
+        #expect(tr.map(\.identifier) == en.map(\.identifier))
+    }
 }
 
 @Suite("NotificationPlanner — invalid settings")
 struct NotificationPlannerInvalidSettingsTests {
     @Test func outOfRangeTimeIsClampedAndTerminates() {
-        let settings = PlannerSettings(notificationHour: 24, notificationMinute: 60)
+        let settings = PlannerSettings(notificationHour: 24, notificationMinute: 60, language: .tr)
         let all = NotificationPlanner.plan(items: [report(1, end: date(2026, 11, 5))],
                                            now: date(2026, 10, 27, 12), settings: settings, calendar: istanbul)
         #expect(all.count == 64)
@@ -150,7 +162,7 @@ struct NotificationPlannerInvalidSettingsTests {
     }
 
     @Test func negativeTimeIsClamped() {
-        let settings = PlannerSettings(notificationHour: -1, notificationMinute: -5)
+        let settings = PlannerSettings(notificationHour: -1, notificationMinute: -5, language: .tr)
         let first = NotificationPlanner.plan(items: [report(1, end: date(2026, 11, 5))],
                                              now: date(2026, 10, 27, 12), settings: settings, calendar: istanbul).first!
         #expect(first.fireDate == date(2026, 10, 28, 0, 0))

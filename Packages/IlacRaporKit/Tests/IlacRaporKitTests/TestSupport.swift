@@ -46,4 +46,4 @@ func medication(
 
 // MARK: - Planner settings
 
-let tenAM = PlannerSettings(notificationHour: 10, notificationMinute: 0)
+let tenAM = PlannerSettings(notificationHour: 10, notificationMinute: 0, language: .tr)
