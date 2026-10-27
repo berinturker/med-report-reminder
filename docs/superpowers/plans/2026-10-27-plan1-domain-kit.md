@@ -563,7 +563,7 @@ struct NotificationPlannerCandidateTests {
 
 - [ ] **Step 2: Run the tests to make sure they fail**
 
-Run: `swift test --package-path Packages/IlacRaporKit --filter NotificationPlanner`
+Run: `swift test --package-path Packages/IlacRaporKit --filter NotificationPlannerCandidateTests`
 Expected: FAIL (`PlannerSettings` not found).
 
 - [ ] **Step 3: Implement `PlannerSettings` and `NotificationPlanner.candidates(for:now:settings:calendar:)`**
