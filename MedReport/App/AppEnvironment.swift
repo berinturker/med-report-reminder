@@ -52,6 +52,7 @@ final class AppEnvironment {
     }
 
     /// Holds one background task id, so the end function and the expiration handler share it.
+    @MainActor
     private final class BackgroundTaskBox {
         var id = UIBackgroundTaskIdentifier.invalid
         func end() {
@@ -64,7 +65,10 @@ final class AppEnvironment {
     /// Asks iOS for extra time so a sync finishes when the user leaves the app (final review I2).
     private static func beginBackgroundTask() -> @MainActor () -> Void {
         let box = BackgroundTaskBox()
-        box.id = UIApplication.shared.beginBackgroundTask(withName: "ReminderSync") { box.end() }
+        // iOS calls the expiration handler on the main thread.
+        box.id = UIApplication.shared.beginBackgroundTask(withName: "ReminderSync") {
+            MainActor.assumeIsolated { box.end() }
+        }
         return { box.end() }
     }
 
