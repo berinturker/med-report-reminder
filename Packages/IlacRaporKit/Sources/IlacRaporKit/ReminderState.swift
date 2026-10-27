@@ -1,17 +1,17 @@
 import Foundation
 
-/// Bir rapor ya da ilacın hatırlatma durumu. Saklanmaz, her seferinde hesaplanır.
+/// The reminder state of a report or a medication. It is not saved; the app calculates it each time.
 public enum ReminderState: Equatable, CaseIterable, Sendable {
-    /// Kalan gün > leadDays
+    /// Days remaining > leadDays
     case normal
-    /// 0 ≤ kalan gün ≤ leadDays
+    /// 0 ≤ days remaining ≤ leadDays
     case reminding
-    /// Kalan gün < 0
+    /// Days remaining < 0
     case overdue
-    /// Kullanıcı "Yeniledim" dedi, yeni bitiş tarihi bekleniyor
+    /// The user tapped "Renewed"; the app waits for the new end date
     case handled
 
-    /// "Dikkat gerekenler" ve ana liste sıralaması için: küçük olan önce gelir.
+    /// For the sort order on the home screen: the smaller value comes first.
     public var sortPriority: Int {
         switch self {
         case .overdue: 0
@@ -21,7 +21,7 @@ public enum ReminderState: Equatable, CaseIterable, Sendable {
         }
     }
 
-    /// Ana ekrandaki "Dikkat gerekenler" bölümünde gösterilir mi?
+    /// True if the item needs attention (the hero card and the upcoming strip use it).
     public var needsAttention: Bool {
         self != .normal
     }

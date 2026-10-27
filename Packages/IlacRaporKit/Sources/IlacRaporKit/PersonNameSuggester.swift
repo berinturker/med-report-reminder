@@ -11,7 +11,7 @@ public struct NameUsage: Sendable, Equatable {
     }
 }
 
-/// Uniform person names and suggestions for the "Kimin için" field (spec 10).
+/// Uniform person names and suggestions for the "For whom" field (spec 10).
 public enum PersonNameSuggester {
     private static let turkish = Locale(identifier: "tr_TR")
 
