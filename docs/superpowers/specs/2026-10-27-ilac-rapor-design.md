@@ -122,7 +122,7 @@ All functions in this layer are pure. A pure function always gives the same resu
 
 | Component | Function |
 |---|---|
-| `AppLanguage` | An enum: `en`, `tr`. Selects the text table and the case rules. |
+| `AppLanguage` | An enum: `en`, `tr`. Selects the text table. |
 | `ReminderLogic` | Calculates days, states and end dates. |
 | `StatusText` | Gives the status badge text for a language (6.6). |
 | `ReminderItem` | A value type. It contains a copy of the data from one report or one medication. |
@@ -478,8 +478,10 @@ For an existing medication, the form also has "Takibi durdur" and "İlacı sil".
 
 - The app trims spaces at the start and at the end of a name before it saves.
 - The suggestions are the unique person names from all reports and medications.
-- Two names are the same if they are equal when the app ignores letter case. The suggestion shows the most recent spelling.
-- The field shows the suggestions that start with the text that the user types. The comparison ignores letter case with the case rules of the app language: Turkish rules ("i/İ", "ı/I") for `.tr`, standard rules for `.en`.
+- The suggestion shows the most recent spelling of a name.
+- The field shows the suggestions that start with the text that the user types.
+- The comparison does not depend on the app language. It uses a loose key: lowercase, then "ı", "İ", "I" and "i" are the same letter, then all diacritics are removed ("Şükrü" → "sukru"). Reason: the language of a name is not known, and an extra suggestion does no harm.
+- Two names with the same loose key are the same name ("Şule" and "Sule").
 
 ---
 
@@ -534,7 +536,7 @@ For an existing medication, the form also has "Takibi durdur" and "İlacı sil".
 | `AppLanguage` | Language selection from preferred languages ("tr-TR" → `.tr`, "en-US" → `.en`, "de-DE" → `.en`, empty → `.en`). |
 | `StatusText`, `NotificationText` | All cases in 6.6 and 7.3 in both languages. English singular and plural. |
 | `NotificationPlanner` | Never more than 64. Ten items in the reminder window. Same-date sort by priority. Text for the fire date. Backup on the day after the last kept notification. No backup when there are no candidates. Handled report every 3 days. Snooze in the future and in the past. Notification time already past today. Reminder start date in the past. Empty person name. |
-| `PersonNameSuggester` | Trims spaces. Ignores letter case. Turkish "i" and "İ" for `.tr`. Standard "I" and "i" for `.en`. Removes duplicates. |
+| `PersonNameSuggester` | Trims spaces. Ignores letter case. "ir" finds "Irene" and "Irmak". "il" finds "İlknur". "sukru" finds "Şükrü". Removes duplicates. |
 | `ReminderItem` mapping | Medication of an archived report. Person name from the report. Archived items are not included. |
 
 ### 14.3 Integration tests

@@ -4,7 +4,7 @@
 
 **Goal:** Make the Domain kit give English and Turkish text, and change all project text to English.
 
-**Architecture:** A new `AppLanguage` enum goes into the Domain kit. Each function that makes user text or compares names receives the language as a parameter. The text tables are Swift code in the kit (spec D11). The app layer selects the language (Plan 2).
+**Architecture:** A new `AppLanguage` enum goes into the Domain kit. Each function that makes user text receives the language as a parameter. Name matching does not depend on the language. The text tables are Swift code in the kit (spec D11). The app layer selects the language (Plan 2).
 
 **Tech Stack:** Swift 6.1, Swift Package Manager, Swift Testing.
 
@@ -24,8 +24,8 @@
 
 1. **A preferred language with a region or script** ("tr-TR", "tr", "TR-tr", "zh-Hant-TW"). Only a language code `tr` (any case) selects Turkish. Test: Task 1, `selectsTurkishOnlyForTr`.
 2. **N = 1 in English overdue text.** "Ended 1 day ago.", not "1 days". Test: Task 2, `englishSingular`.
-3. **A Turkish name on an English phone** ("İlknur" typed as "il"). Standard rules lowercase "İ" to "i̇" (two code points), so a naive prefix check fails. Expected: the suggestion still appears. Test: Task 3, `englishPhoneFindsTurkishDottedI`.
-4. **An English name on a Turkish phone** ("Irene" typed as "ir"). With Turkish rules "I" becomes "ı", so "ir" does not match. Expected: no crash, no wrong suggestion; the user types "ır" or the phone is English. This is accepted behavior. Test: Task 3, `turkishPhoneUsesTurkishRules`.
+3. **A name in a different language from the phone** ("Irene" typed as "ir", "İlknur" typed as "il"). Expected: the suggestion appears on any phone. Test: Task 3, `dotlessAndDottedIAreTheSameLetter`.
+4. **A Turkish name typed without Turkish letters** ("suk" for "Şükrü"). Expected: the suggestion appears. Test: Task 3, `diacriticsAreIgnored`.
 5. **A plan where the language changes between two syncs.** The full re-plan uses the new language for all notifications. Test: Task 2, `planUsesSettingsLanguage`.
 
 ---
@@ -37,7 +37,7 @@ Packages/IlacRaporKit/Sources/IlacRaporKit/
 ├── AppLanguage.swift                       (Task 1, new)
 ├── StatusText.swift                        (Task 1, new; statusText moves out of ReminderLogic)
 ├── ReminderLogic.swift                     (Task 1, remove statusText)
-├── PersonNameSuggester.swift               (Task 3)
+├── PersonNameSuggester.swift               (Task 3, loose fold)
 └── Notifications/
     ├── NotificationText.swift              (Task 2)
     └── NotificationPlanner.swift           (Task 2, PlannerSettings.language)
@@ -280,51 +280,52 @@ git commit -m "feat(kit): add English notification text and planner language"
 
 ---
 
-### Task 3: Language-aware `PersonNameSuggester`
+### Task 3: Loose name matching in `PersonNameSuggester`
 
 **Files:**
 - Modify: `Sources/IlacRaporKit/PersonNameSuggester.swift`
 - Modify: `Tests/IlacRaporKitTests/PersonNameSuggesterTests.swift`
 
 **Interfaces:**
-- Consumes: `AppLanguage.locale` (Task 1).
-- Produces (changed signature):
+- Signatures do not change. `suggestions(for:from:)` has no language parameter (spec 10).
+
+Fold rule (spec 10), used for both the prefix match and the duplicate check:
+`normalize(text).lowercased(with: Locale(identifier: "tr_TR"))`, then replace "ı" with "i", then `folding(options: .diacriticInsensitive, locale: Locale(identifier: "tr_TR"))`.
+(Turkish lowercasing makes "I" → "ı" and "İ" → "i" as single letters; the replace step then makes all four the same.)
+
+- [ ] **Step 1: Add the failing tests**
 
 ```swift
-public static func suggestions(for typed: String, from usages: [NameUsage], language: AppLanguage) -> [String]
-```
-
-Fold rule: `normalize(text).lowercased(with: language.locale)`, then for `.en` remove combining marks (`folding(options: .diacriticInsensitive, locale: language.locale)`), so "İ" and "I" both match "i". For `.tr` do not remove marks: "ı" and "i" stay different.
-
-- [ ] **Step 1: Update the tests**
-
-Existing tests pass `language: .tr` and keep their values. Rename `turkishDottedAndDotlessI` to `turkishPhoneUsesTurkishRules` and add one assertion to it:
-
-```swift
-        let en = [NameUsage(name: "Irene", usedAt: date(2026, 3, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "ir", from: en, language: .tr).isEmpty)
-```
-
-Add:
-
-```swift
-    @Test func englishPhoneUsesStandardRules() {
-        let u = [NameUsage(name: "Irene", usedAt: date(2026, 1, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "ir", from: u, language: .en) == ["Irene"])
+    @Test func dotlessAndDottedIAreTheSameLetter() {
+        let u = [NameUsage(name: "Irene", usedAt: date(2026, 1, 1)),
+                 NameUsage(name: "Irmak", usedAt: date(2026, 2, 1)),
+                 NameUsage(name: "İlknur", usedAt: date(2026, 3, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "ir", from: u) == ["Irmak", "Irene"])
+        #expect(PersonNameSuggester.suggestions(for: "ır", from: u) == ["Irmak", "Irene"])
+        #expect(PersonNameSuggester.suggestions(for: "İl", from: u) == ["İlknur"])
     }
 
-    @Test func englishPhoneFindsTurkishDottedI() {
-        let u = [NameUsage(name: "İlknur", usedAt: date(2026, 1, 1))]
-        #expect(PersonNameSuggester.suggestions(for: "il", from: u, language: .en) == ["İlknur"])
+    @Test func diacriticsAreIgnored() {
+        let u = [NameUsage(name: "Şükrü", usedAt: date(2026, 1, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "sukru", from: u).isEmpty)   // exact match
+        #expect(PersonNameSuggester.suggestions(for: "suk", from: u) == ["Şükrü"])
+    }
+
+    @Test func looseDuplicatesMerge() {
+        let u = [NameUsage(name: "Sule", usedAt: date(2026, 1, 1)),
+                 NameUsage(name: "Şule", usedAt: date(2026, 2, 1))]
+        #expect(PersonNameSuggester.suggestions(for: "", from: u) == ["Şule"])
     }
 ```
+
+Keep all existing tests. Rename `turkishDottedAndDotlessI` to `turkishCaseRulesStillMatch`.
 
 - [ ] **Step 2: Run the tests to make sure they fail**
 
 Run: `swift test --package-path Packages/IlacRaporKit --filter PersonNameSuggester`
-Expected: FAIL (extra argument `language`).
+Expected: FAIL (`dotlessAndDottedIAreTheSameLetter` gets `["Irmak"]`).
 
-- [ ] **Step 3: Implement the language parameter**
+- [ ] **Step 3: Implement the fold rule**
 
 - [ ] **Step 4: Run all tests**
 
@@ -335,7 +336,7 @@ Expected: PASS.
 
 ```bash
 git add Packages/IlacRaporKit
-git commit -m "feat(kit): use app language case rules for name suggestions"
+git commit -m "feat(kit): loose name matching for i/ı and diacritics"
 ```
 
 ---
@@ -378,7 +379,7 @@ git commit -m "docs: change project text to English"
 | D10, D11, 4 (language selection) | 1 |
 | 6.6 status text, both languages | 1 |
 | 7.3 text, both languages; planner language | 2 |
-| 10 name rules per language | 3 |
+| 10 loose name matching | 3 |
 | 14.2 new unit tests | 1, 2, 3 |
 | 16.5 English project text | 4 |
 
