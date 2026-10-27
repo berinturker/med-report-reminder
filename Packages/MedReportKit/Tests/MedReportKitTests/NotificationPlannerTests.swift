@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import IlacRaporKit
+@testable import MedReportKit
 
 @Suite("NotificationPlanner — candidates")
 struct NotificationPlannerCandidateTests {

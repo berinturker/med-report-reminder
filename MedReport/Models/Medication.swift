@@ -1,6 +1,6 @@
 import Foundation
 import SwiftData
-import IlacRaporKit
+import MedReportKit
 
 /// A medication. It can have a report or no report.
 @Model

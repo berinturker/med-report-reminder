@@ -1,6 +1,6 @@
 import Foundation
 import SwiftData
-import IlacRaporKit
+import MedReportKit
 
 /// A medication report. For CloudKit compatibility: all fields have a default value,
 /// the relationship is optional, and there is no `@Attribute(.unique)`.

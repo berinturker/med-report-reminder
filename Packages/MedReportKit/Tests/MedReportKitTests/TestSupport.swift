@@ -1,5 +1,5 @@
 import Foundation
-@testable import IlacRaporKit
+@testable import MedReportKit
 
 // MARK: - Calendars and dates
 

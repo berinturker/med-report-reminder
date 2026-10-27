@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import IlacRaporKit
+@testable import MedReportKit
 
 @Suite("AppLanguage")
 struct AppLanguageTests {

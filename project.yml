@@ -1,0 +1,50 @@
+name: MedReport
+options:
+  bundleIdPrefix: com.berinturker
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+packages:
+  MedReportKit:
+    path: Packages/MedReportKit
+targets:
+  MedReport:
+    type: application
+    platform: iOS
+    sources: [MedReport]
+    dependencies:
+      - package: MedReportKit
+    configFiles:
+      Debug: Config/Base.xcconfig
+      Release: Config/Base.xcconfig
+    info:
+      path: MedReport/Info.plist
+      properties:
+        CFBundleDisplayName: MedReport
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.berinturker.medreport
+        CODE_SIGN_STYLE: Automatic
+  MedReportTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [MedReportTests]
+    dependencies:
+      - target: MedReport
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.berinturker.medreport.tests
+schemes:
+  MedReport:
+    build:
+      targets:
+        MedReport: all
+    test:
+      targets: [MedReportTests]

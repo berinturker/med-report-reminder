@@ -1,0 +1,2 @@
+// Shared build settings. Local.xcconfig is not in git (it holds DEVELOPMENT_TEAM).
+#include? "Local.xcconfig"
