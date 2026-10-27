@@ -30,11 +30,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         let kind = content.userInfo[NotificationUserInfoKey.kind] as? String
         let id = content.userInfo[NotificationUserInfoKey.id] as? String
         let deliveredAt = response.notification.date
+        // Safe: the handler is called exactly once, on the main actor, as iOS requires.
+        nonisolated(unsafe) let done = completionHandler
         Task { @MainActor in
             await AppEnvironment.shared.actions.respond(actionIdentifier: action, categoryIdentifier: category,
                                                         kind: kind, id: id, deliveredAt: deliveredAt,
                                                         now: Date(), calendar: .current)
-            completionHandler()
+            done()
         }
     }
 
