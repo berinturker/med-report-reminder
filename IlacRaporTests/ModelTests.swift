@@ -4,7 +4,7 @@ import Testing
 @testable import IlacRapor
 
 @MainActor
-@Suite("Modeller")
+@Suite("Models")
 struct ModelTests {
 
     private let cal: Calendar = {
@@ -17,7 +17,7 @@ struct ModelTests {
         cal.date(from: DateComponents(year: y, month: m, day: d, hour: h))!
     }
 
-    /// Container'ı döndürüyoruz: context'i tutan container serbest kalırsa SwiftData çöker.
+    /// Returns the container: SwiftData crashes if the container of a context is released.
     private func makeContainer() throws -> ModelContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         return try ModelContainer(for: Report.self, Medication.self, configurations: config)
@@ -25,12 +25,12 @@ struct ModelTests {
 
     // MARK: Report
 
-    @Test("Rapor: yenileme döngüsü")
+    @Test("Report: renewal cycle")
     func reportRenewCycle() {
         let report = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 10))
         let now = date(2026, 10, 27)
 
-        #expect(report.reminderState(now: now, calendar: cal) == .reminding) // 14 gün kaldı
+        #expect(report.reminderState(now: now, calendar: cal) == .reminding) // 14 days left
 
         report.markHandled(at: now)
         #expect(report.isHandled)
@@ -43,7 +43,7 @@ struct ModelTests {
         #expect(report.reminderState(now: now, calendar: cal) == .normal)
     }
 
-    @Test("Geçmiş bitiş tarihiyle kayıt → doğrudan overdue")
+    @Test("Saved with a past end date → overdue immediately")
     func reportCreatedWithPastDate() {
         let report = Report(title: "Kardiyoloji", endDate: date(2026, 10, 20))
         #expect(report.reminderState(now: date(2026, 10, 27), calendar: cal) == .overdue)
@@ -52,12 +52,12 @@ struct ModelTests {
 
     // MARK: Medication
 
-    @Test("İlaç: stok bitişi ve 'Aldım' döngüsü")
+    @Test("Medication: supply end and pickup cycle")
     func medicationPickupCycle() {
         let med = Medication(name: "Beloc", lastPickupDate: date(2026, 10, 1), supplyDays: 30)
         let now = date(2026, 10, 27)
 
-        #expect(med.daysRemaining(now: now, calendar: cal) == 4)                 // 31 Ekim'de bitiyor
+        #expect(med.daysRemaining(now: now, calendar: cal) == 4)                 // ends on 31 October
         #expect(med.reminderState(now: now, calendar: cal) == .reminding)
 
         med.markPickedUp(on: date(2026, 10, 27, 18), calendar: cal)
@@ -66,7 +66,7 @@ struct ModelTests {
         #expect(med.reminderState(now: now, calendar: cal) == .normal)
     }
 
-    @Test("Kişi adı: rapora bağlıysa raporunki, değilse kendisininki")
+    @Test("Person name: from the report if linked, else its own")
     func effectivePersonName() {
         let report = Report(title: "Tansiyon", personName: "Babam", endDate: date(2027, 1, 1))
         let linked = Medication(name: "Beloc", personName: "Yanlış", report: report)
@@ -78,7 +78,7 @@ struct ModelTests {
 
     // MARK: SwiftData
 
-    @Test("Rapor silinince bağlı ilaçlar da silinir, raporsuz ilaç kalır")
+    @Test("Deleting a report deletes its medications; a medication without a report stays")
     func cascadeDelete() throws {
         let container = try makeContainer()
         let context = container.mainContext

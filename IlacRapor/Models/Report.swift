@@ -1,14 +1,15 @@
 import Foundation
 import SwiftData
+import IlacRaporKit
 
-/// İlaç raporu. CloudKit uyumu için: tüm alanların varsayılan değeri var,
-/// ilişki optional, `@Attribute(.unique)` yok.
+/// A medication report. For CloudKit compatibility: all fields have a default value,
+/// the relationship is optional, and there is no `@Attribute(.unique)`.
 @Model
 final class Report {
     var id: UUID = UUID()
     var title: String = ""
     var personName: String = ""
-    /// Raporun üzerindeki bitiş tarihi, kullanıcı doğrudan girer.
+    /// The end date on the report. The user enters it directly.
     var endDate: Date = Date()
     var leadDays: Int = 18
     var isHandled: Bool = false
@@ -35,7 +36,7 @@ final class Report {
         self.createdAt = Date()
     }
 
-    // MARK: - Hesaplananlar
+    // MARK: - Calculated values
 
     func daysRemaining(now: Date = .now, calendar: Calendar = .current) -> Int {
         ReminderLogic.daysRemaining(until: endDate, now: now, calendar: calendar)
@@ -45,15 +46,15 @@ final class Report {
         ReminderLogic.state(endDate: endDate, leadDays: leadDays, isHandled: isHandled, now: now, calendar: calendar)
     }
 
-    // MARK: - Yenileme döngüsü
+    // MARK: - Renewal cycle
 
-    /// "Yeniledim": hatırlatmalar durur, yeni tarih beklenir.
+    /// "Renewed": the reminders stop and the app waits for the new date.
     func markHandled(at date: Date = .now) {
         isHandled = true
         handledAt = date
     }
 
-    /// Yeni bitiş tarihi girildi: yeni döngü başlar.
+    /// The user entered the new end date: a new cycle starts.
     func renew(newEndDate: Date) {
         endDate = newEndDate
         isHandled = false

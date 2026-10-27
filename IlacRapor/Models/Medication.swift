@@ -1,18 +1,19 @@
 import Foundation
 import SwiftData
+import IlacRaporKit
 
-/// İlaç. Bir rapora bağlı olabilir ya da raporsuz olabilir.
+/// A medication. It can have a report or no report.
 @Model
 final class Medication {
     var id: UUID = UUID()
     var name: String = ""
-    /// "Sabah 1, akşam 1" gibi, sadece bilgi amaçlı.
+    /// For example "1 in the morning, 1 in the evening". Information only.
     var dosageNote: String = ""
-    /// Raporsuz ilaçlar için. Rapora bağlıysa raporunki kullanılır.
+    /// Used only when the medication has no report. Else the report's person name is used.
     var personName: String = ""
-    /// Eczaneden en son alındığı gün.
+    /// The last day the user got the medication from the pharmacy.
     var lastPickupDate: Date = Date()
-    /// Alınan ilaç kaç gün yetiyor (28/30/56/60/84/90…).
+    /// How many days the supply lasts (28/30/56/60/84/90…).
     var supplyDays: Int = 30
     var leadDays: Int = 7
     var isHandled: Bool = false
@@ -40,9 +41,9 @@ final class Medication {
         self.createdAt = Date()
     }
 
-    // MARK: - Hesaplananlar
+    // MARK: - Calculated values
 
-    /// Rapora bağlıysa raporun kişisi, değilse ilacın kendi kişisi.
+    /// The person name of the report if there is one, else the medication's own person name.
     var effectivePersonName: String {
         report?.personName ?? personName
     }
@@ -65,9 +66,9 @@ final class Medication {
         )
     }
 
-    // MARK: - Yenileme döngüsü
+    // MARK: - Renewal cycle
 
-    /// "Aldım": alım tarihi bugün olur, döngü kendiliğinden yeniden başlar.
+    /// "Picked up": the pickup date becomes today and a new cycle starts.
     func markPickedUp(on date: Date = .now, calendar: Calendar = .current) {
         lastPickupDate = calendar.startOfDay(for: date)
         isHandled = false

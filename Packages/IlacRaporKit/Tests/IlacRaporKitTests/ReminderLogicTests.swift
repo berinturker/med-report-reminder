@@ -1,51 +1,35 @@
 import Foundation
 import Testing
-@testable import IlacRapor
+@testable import IlacRaporKit
 
-// MARK: - Yardımcılar
+// MARK: - Day count
 
-private func calendar(_ timeZone: String = "Europe/Istanbul") -> Calendar {
-    var cal = Calendar(identifier: .gregorian)
-    cal.timeZone = TimeZone(identifier: timeZone)!
-    return cal
-}
-
-private func date(
-    _ year: Int, _ month: Int, _ day: Int,
-    _ hour: Int = 12, _ minute: Int = 0,
-    in cal: Calendar = calendar()
-) -> Date {
-    cal.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
-}
-
-// MARK: - Gün hesabı
-
-@Suite("Gün hesabı")
+@Suite("Day count")
 struct DayCountTests {
     let cal = calendar()
 
-    @Test("Aynı gün, farklı saat → 0")
+    @Test("Same day, different hours → 0")
     func sameDayDifferentHours() {
         let now = date(2026, 10, 27, 23, 50)
         let end = date(2026, 10, 27, 0, 5)
         #expect(ReminderLogic.daysRemaining(until: end, now: now, calendar: cal) == 0)
     }
 
-    @Test("Gece yarısı geçişi: 23:59 → ertesi gün 00:00 = 1 gün")
+    @Test("Midnight crossing: 23:59 → next day 00:00 = 1 day")
     func midnightCrossing() {
         let now = date(2026, 10, 27, 23, 59)
         let end = date(2026, 10, 28, 0, 0)
         #expect(ReminderLogic.daysRemaining(until: end, now: now, calendar: cal) == 1)
     }
 
-    @Test("Geçmiş tarih → negatif")
+    @Test("Past date → negative")
     func pastDateIsNegative() {
         let now = date(2026, 10, 27)
         let end = date(2026, 10, 24)
         #expect(ReminderLogic.daysRemaining(until: end, now: now, calendar: cal) == -3)
     }
 
-    @Test("Yaz saati geçişi sonucu bozmaz (Berlin, 29 Mart 2026)")
+    @Test("Daylight saving change does not break the result (Berlin, 29 March 2026)")
     func daylightSavingTransition() {
         let berlin = calendar("Europe/Berlin")
         let now = date(2026, 3, 28, 23, 30, in: berlin)
@@ -53,7 +37,7 @@ struct DayCountTests {
         #expect(ReminderLogic.daysRemaining(until: end, now: now, calendar: berlin) == 2)
     }
 
-    @Test("Yıl geçişi")
+    @Test("Year boundary")
     func yearBoundary() {
         let now = date(2026, 12, 31)
         let end = date(2027, 1, 18)
@@ -61,103 +45,84 @@ struct DayCountTests {
     }
 }
 
-// MARK: - Durum
+// MARK: - State
 
-@Suite("Hatırlatma durumu")
+@Suite("Reminder state")
 struct StateTests {
 
-    @Test("Bitiş bugün → reminding")
+    @Test("End date today → reminding")
     func endsToday() {
         #expect(ReminderLogic.state(daysRemaining: 0, leadDays: 18, isHandled: false) == .reminding)
     }
 
-    @Test("Bitiş geçmiş → overdue")
+    @Test("End date past → overdue")
     func pastEndIsOverdue() {
         #expect(ReminderLogic.state(daysRemaining: -1, leadDays: 18, isHandled: false) == .overdue)
     }
 
-    @Test("Sınır: kalan == leadDays → reminding, leadDays+1 → normal")
+    @Test("Boundary: remaining == leadDays → reminding, leadDays + 1 → normal")
     func leadDaysBoundary() {
         #expect(ReminderLogic.state(daysRemaining: 18, leadDays: 18, isHandled: false) == .reminding)
         #expect(ReminderLogic.state(daysRemaining: 19, leadDays: 18, isHandled: false) == .normal)
     }
 
-    @Test("leadDays kalan günden büyük → kayıttan itibaren hatırlatır")
+    @Test("leadDays larger than remaining → reminds from the start")
     func leadDaysLargerThanRemaining() {
         #expect(ReminderLogic.state(daysRemaining: 5, leadDays: 18, isHandled: false) == .reminding)
     }
 
-    @Test("handled her şeyi ezer, gecikmiş olsa bile")
+    @Test("handled overrides all states, also overdue")
     func handledOverridesOverdue() {
         #expect(ReminderLogic.state(daysRemaining: -10, leadDays: 18, isHandled: true) == .handled)
         #expect(ReminderLogic.state(daysRemaining: 100, leadDays: 18, isHandled: true) == .handled)
     }
 
-    @Test("Negatif leadDays sıfır gibi davranır")
+    @Test("Negative leadDays operates as zero")
     func negativeLeadDays() {
         #expect(ReminderLogic.state(daysRemaining: 0, leadDays: -5, isHandled: false) == .reminding)
         #expect(ReminderLogic.state(daysRemaining: 1, leadDays: -5, isHandled: false) == .normal)
     }
 
-    @Test("Sıralama önceliği: overdue < reminding < handled < normal")
+    @Test("Sort priority: overdue < reminding < handled < normal")
     func sortPriority() {
         let sorted = ReminderState.allCases.sorted { $0.sortPriority < $1.sortPriority }
         #expect(sorted == [.overdue, .reminding, .handled, .normal])
     }
 }
 
-// MARK: - Tarih türetme
+// MARK: - Derived dates
 
-@Suite("Tarih türetme")
+@Suite("Derived dates")
 struct DerivedDateTests {
     let cal = calendar()
 
-    @Test("Stok bitişi = alım + gün sayısı, saat sıfırlanır")
+    @Test("Supply end = pickup + supply days, time set to start of day")
     func supplyEnd() {
         let end = ReminderLogic.supplyEndDate(lastPickupDate: date(2026, 1, 1, 17, 45), supplyDays: 30, calendar: cal)
         #expect(end == date(2026, 1, 31, 0, 0))
     }
 
-    @Test("Stok bitişi şubatı doğru geçer")
+    @Test("Supply end crosses February correctly")
     func supplyEndAcrossFebruary() {
         let end = ReminderLogic.supplyEndDate(lastPickupDate: date(2027, 2, 1), supplyDays: 30, calendar: cal)
         #expect(end == date(2027, 3, 3, 0, 0))
     }
 
-    @Test("Hatırlatma başlangıcı = bitiş − leadDays")
+    @Test("Reminder start = end − leadDays")
     func reminderStart() {
         let start = ReminderLogic.reminderStartDate(endDate: date(2026, 3, 20), leadDays: 18, calendar: cal)
         #expect(start == date(2026, 3, 2, 0, 0))
     }
 
-    @Test("Yenileme önerisi: +1 yıl")
+    @Test("Renewal suggestion: + 1 year")
     func renewalSuggestion() {
         let next = ReminderLogic.suggestedRenewalEndDate(previousEndDate: date(2026, 11, 14), calendar: cal)
         #expect(next == date(2027, 11, 14, 0, 0))
     }
 
-    @Test("Yenileme önerisi: 29 Şubat → 28 Şubat")
+    @Test("Renewal suggestion: 29 February → 28 February")
     func renewalSuggestionLeapDay() {
         let next = ReminderLogic.suggestedRenewalEndDate(previousEndDate: date(2028, 2, 29), calendar: cal)
         #expect(next == date(2029, 2, 28, 0, 0))
-    }
-}
-
-// MARK: - Metinler
-
-@Suite("Durum metni")
-struct StatusTextTests {
-
-    @Test(arguments: zip(
-        [12, 2, 1, 0, -1, -3],
-        ["12 gün kaldı", "2 gün kaldı", "Yarın bitiyor", "Bugün bitiyor", "1 gün geçti", "3 gün geçti"]
-    ))
-    func text(days: Int, expected: String) {
-        #expect(ReminderLogic.statusText(daysRemaining: days, isHandled: false) == expected)
-    }
-
-    @Test("handled → Yeni tarih bekleniyor")
-    func handledText() {
-        #expect(ReminderLogic.statusText(daysRemaining: -5, isHandled: true) == "Yeni tarih bekleniyor")
     }
 }
