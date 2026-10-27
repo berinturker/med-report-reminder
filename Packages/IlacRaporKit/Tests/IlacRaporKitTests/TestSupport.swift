@@ -43,3 +43,7 @@ func medication(
     ReminderItem(kind: .medication, id: uuid(n), title: name, personName: person, endDate: end,
                  leadDays: lead, snoozeUntil: snooze)
 }
+
+// MARK: - Planner settings
+
+let tenAM = PlannerSettings(notificationHour: 10, notificationMinute: 0)
