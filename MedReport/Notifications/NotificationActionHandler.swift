@@ -1,6 +1,7 @@
 import Foundation
 import OSLog
 import SwiftData
+import UserNotifications
 import MedReportKit
 
 /// Changes the model for the notification buttons and taps (spec 8.2, 8.3).
@@ -19,11 +20,32 @@ final class NotificationActionHandler {
         self.router = router
     }
 
+    /// Entry point for the notification delegate. It returns only after the save and the sync
+    /// are done, so iOS does not suspend the app in the middle (spec 8.3 step 5).
+    func respond(actionIdentifier: String, categoryIdentifier: String, kind: String?, id: String?,
+                 deliveredAt: Date?, now: Date, calendar: Calendar) async {
+        var userInfo: [AnyHashable: Any] = [:]
+        if let kind { userInfo[NotificationUserInfoKey.kind] = kind }
+        if let id { userInfo[NotificationUserInfoKey.id] = id }
+        switch actionIdentifier {
+        case UNNotificationDefaultActionIdentifier:
+            handleTap(categoryIdentifier: categoryIdentifier, userInfo: userInfo)
+        case UNNotificationDismissActionIdentifier:
+            break
+        default:
+            await handle(actionIdentifier: actionIdentifier, userInfo: userInfo, deliveredAt: deliveredAt,
+                         now: now, calendar: calendar)
+        }
+    }
+
     /// Steps (spec 8.3): find the item → change it → save → sync.
     /// A missing item or an unknown action changes nothing, but the sync still runs.
-    func handle(actionIdentifier: String, userInfo: [AnyHashable: Any], now: Date, calendar: Calendar) async {
+    /// - Parameter deliveredAt: the delivery date of the notification. "Picked up" on a notification
+    ///   from before the last pickup is ignored, so an old notification cannot move the supply end later.
+    func handle(actionIdentifier: String, userInfo: [AnyHashable: Any], deliveredAt: Date? = nil,
+                now: Date, calendar: Calendar) async {
         if let action = NotificationAction(rawValue: actionIdentifier), let ref = itemReference(userInfo) {
-            apply(action, to: ref, now: now, calendar: calendar)
+            apply(action, to: ref, deliveredAt: deliveredAt, now: now, calendar: calendar)
             do {
                 try container.mainContext.save()
             } catch {
@@ -55,14 +77,19 @@ final class NotificationActionHandler {
     // MARK: - Private
 
     private func apply(_ action: NotificationAction, to ref: (kind: ReminderItem.Kind, id: UUID),
-                       now: Date, calendar: Calendar) {
+                       deliveredAt: Date?, now: Date, calendar: Calendar) {
         switch (action, ref.kind) {
         case (.renewed, .report):
             guard let report = report(ref.id) else { return }
             report.markHandled(at: now)
             report.snoozeUntil = nil
         case (.pickedUp, .medication):
-            medication(ref.id)?.markPickedUp(on: now, calendar: calendar)
+            guard let medication = medication(ref.id) else { return }
+            if let deliveredAt, medication.lastPickupDate >= calendar.startOfDay(for: deliveredAt) {
+                logger.notice("Ignored PICKED_UP from a notification before the last pickup")
+                return
+            }
+            medication.markPickedUp(on: now, calendar: calendar)
         case (.snooze, .report):
             report(ref.id)?.snoozeUntil = now.addingTimeInterval(Self.snoozeInterval)
         case (.snooze, .medication):

@@ -14,27 +14,20 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
-    /// A button or a tap on a notification.
+    /// A button or a tap on a notification. The method returns only after the save and the
+    /// sync are done: iOS may suspend the app as soon as it returns (spec 8.3).
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse) async {
-        // Copy the values as Sendable strings before going to the main actor.
+        // Copy the values as Sendable values before going to the main actor.
         let action = response.actionIdentifier
         let content = response.notification.request.content
         let category = content.categoryIdentifier
         let kind = content.userInfo[NotificationUserInfoKey.kind] as? String
         let id = content.userInfo[NotificationUserInfoKey.id] as? String
-
-        await MainActor.run {
-            var userInfo: [AnyHashable: Any] = [:]
-            if let kind { userInfo[NotificationUserInfoKey.kind] = kind }
-            if let id { userInfo[NotificationUserInfoKey.id] = id }
-            let handler = AppEnvironment.shared.actions
-            if action == UNNotificationDefaultActionIdentifier {
-                handler.handleTap(categoryIdentifier: category, userInfo: userInfo)
-            } else if action != UNNotificationDismissActionIdentifier {
-                Task { await handler.handle(actionIdentifier: action, userInfo: userInfo, now: Date(), calendar: .current) }
-            }
-        }
+        let deliveredAt = response.notification.date
+        await AppEnvironment.shared.actions.respond(actionIdentifier: action, categoryIdentifier: category,
+                                                    kind: kind, id: id, deliveredAt: deliveredAt,
+                                                    now: Date(), calendar: .current)
     }
 
     /// A notification while the app is open: show it as a banner with a sound (spec 8.4).

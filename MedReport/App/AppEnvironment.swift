@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import UIKit
 import MedReportKit
 
 /// The shared objects of the app. The SwiftUI scene and the `AppDelegate` use the same
@@ -39,7 +40,8 @@ final class AppEnvironment {
         scheduler = NotificationScheduler(center: SystemNotificationCenter(), calendar: .autoupdatingCurrent,
                                           isFastModeAllowed: fastModeAllowed)
         sync = ReminderSync(container: container, settings: settings, scheduler: scheduler,
-                            language: { AppEnvironment.currentLanguage })
+                            language: { AppEnvironment.currentLanguage },
+                            beginBackgroundTask: AppEnvironment.beginBackgroundTask)
         actions = NotificationActionHandler(container: container, sync: sync, router: router)
     }
 
@@ -47,6 +49,23 @@ final class AppEnvironment {
     func saveAndSync() async throws {
         try container.mainContext.save()
         await sync.sync()
+    }
+
+    /// Holds one background task id, so the end function and the expiration handler share it.
+    private final class BackgroundTaskBox {
+        var id = UIBackgroundTaskIdentifier.invalid
+        func end() {
+            guard id != .invalid else { return }
+            UIApplication.shared.endBackgroundTask(id)
+            id = .invalid
+        }
+    }
+
+    /// Asks iOS for extra time so a sync finishes when the user leaves the app (final review I2).
+    private static func beginBackgroundTask() -> @MainActor () -> Void {
+        let box = BackgroundTaskBox()
+        box.id = UIApplication.shared.beginBackgroundTask(withName: "ReminderSync") { box.end() }
+        return { box.end() }
     }
 
     func registerCategories() {
