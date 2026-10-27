@@ -25,3 +25,21 @@ func date(
 func uuid(_ n: Int) -> UUID {
     UUID(uuidString: String(format: "00000000-0000-0000-0000-%012d", n))!
 }
+
+// MARK: - Item factories
+
+func report(
+    _ n: Int, title: String = "Tansiyon raporu", person: String = "Babam",
+    end: Date, lead: Int = 18, handledAt: Date? = nil, snooze: Date? = nil
+) -> ReminderItem {
+    ReminderItem(kind: .report, id: uuid(n), title: title, personName: person, endDate: end,
+                 leadDays: lead, isHandled: handledAt != nil, handledAt: handledAt, snoozeUntil: snooze)
+}
+
+func medication(
+    _ n: Int, name: String = "Beloc", person: String = "Babam",
+    end: Date, lead: Int = 7, snooze: Date? = nil
+) -> ReminderItem {
+    ReminderItem(kind: .medication, id: uuid(n), title: name, personName: person, endDate: end,
+                 leadDays: lead, snoozeUntil: snooze)
+}
