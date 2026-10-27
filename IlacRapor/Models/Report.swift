@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import IlacRaporKit
 
 /// İlaç raporu. CloudKit uyumu için: tüm alanların varsayılan değeri var,
 /// ilişki optional, `@Attribute(.unique)` yok.

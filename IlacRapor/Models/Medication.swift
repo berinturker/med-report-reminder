@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import IlacRaporKit
 
 /// İlaç. Bir rapora bağlı olabilir ya da raporsuz olabilir.
 @Model

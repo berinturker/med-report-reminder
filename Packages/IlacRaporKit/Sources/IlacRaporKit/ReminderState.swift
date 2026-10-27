@@ -1,7 +1,7 @@
 import Foundation
 
 /// Bir rapor ya da ilacın hatırlatma durumu. Saklanmaz, her seferinde hesaplanır.
-enum ReminderState: Equatable, CaseIterable {
+public enum ReminderState: Equatable, CaseIterable, Sendable {
     /// Kalan gün > leadDays
     case normal
     /// 0 ≤ kalan gün ≤ leadDays
@@ -12,7 +12,7 @@ enum ReminderState: Equatable, CaseIterable {
     case handled
 
     /// "Dikkat gerekenler" ve ana liste sıralaması için: küçük olan önce gelir.
-    var sortPriority: Int {
+    public var sortPriority: Int {
         switch self {
         case .overdue: 0
         case .reminding: 1
@@ -22,7 +22,7 @@ enum ReminderState: Equatable, CaseIterable {
     }
 
     /// Ana ekrandaki "Dikkat gerekenler" bölümünde gösterilir mi?
-    var needsAttention: Bool {
+    public var needsAttention: Bool {
         self != .normal
     }
 }

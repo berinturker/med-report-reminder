@@ -1,22 +1,7 @@
 import Foundation
 import Testing
-@testable import IlacRapor
+@testable import IlacRaporKit
 
-// MARK: - Yardımcılar
-
-private func calendar(_ timeZone: String = "Europe/Istanbul") -> Calendar {
-    var cal = Calendar(identifier: .gregorian)
-    cal.timeZone = TimeZone(identifier: timeZone)!
-    return cal
-}
-
-private func date(
-    _ year: Int, _ month: Int, _ day: Int,
-    _ hour: Int = 12, _ minute: Int = 0,
-    in cal: Calendar = calendar()
-) -> Date {
-    cal.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
-}
 
 // MARK: - Gün hesabı
 
