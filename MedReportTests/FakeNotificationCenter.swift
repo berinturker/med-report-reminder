@@ -12,8 +12,12 @@ final class FakeNotificationCenter: NotificationCenterProtocol {
     var removeAllCount = 0
     var categories: Set<UNNotificationCategory> = []
     var failingIdentifiers: Set<String> = []
+    /// Number of `Task.yield()` calls inside each `add`, to let other main-actor work run in between,
+    /// like the real center's XPC round trip.
+    var yieldsPerAdd = 0
 
     func add(_ request: UNNotificationRequest) async throws {
+        for _ in 0..<yieldsPerAdd { await Task.yield() }
         if failingIdentifiers.contains(request.identifier) { throw AddFailure() }
         added.removeAll { $0.identifier == request.identifier }
         added.append(request)

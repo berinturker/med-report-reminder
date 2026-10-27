@@ -122,4 +122,50 @@ struct NotificationActionHandlerTests {
         env.handler.handleTap(categoryIdentifier: "BACKUP", userInfo: [:])
         #expect(env.router.pending == .home)
     }
+
+    /// Final review C1: `respond` returns only after the save and the sync.
+    @Test func respondAwaitsSaveAndSync() async throws {
+        let env = try make()
+        let r = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        env.container.mainContext.insert(r)
+        try env.container.mainContext.save()
+
+        await env.handler.respond(actionIdentifier: "RENEWED", categoryIdentifier: "REPORT_REMINDER",
+                                  kind: "report", id: r.id.uuidString, deliveredAt: date(2026, 10, 27, 10),
+                                  now: date(2026, 10, 27, 12), calendar: istanbul)
+
+        #expect(r.isHandled)
+        #expect(env.center.removeAllCount == 1)
+        #expect(env.center.added.last?.identifier == "backup")
+    }
+
+    @Test func respondDefaultActionRoutesTap() async throws {
+        let env = try make()
+        let r = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        env.container.mainContext.insert(r)
+        try env.container.mainContext.save()
+
+        await env.handler.respond(actionIdentifier: UNNotificationDefaultActionIdentifier,
+                                  categoryIdentifier: "REPORT_REMINDER", kind: "report", id: r.id.uuidString,
+                                  deliveredAt: date(2026, 10, 27, 10), now: date(2026, 10, 27, 12), calendar: istanbul)
+
+        #expect(env.router.pending == .reportDetail(r.id))
+        #expect(!r.isHandled)
+    }
+
+    /// Final review M4 (graded Important): "Picked up" on a notification from before the last pickup
+    /// must not move the supply end date later.
+    @Test func pickedUpOnOldNotificationIsIgnored() async throws {
+        let env = try make()
+        let m = Medication(name: "Beloc", lastPickupDate: date(2026, 10, 25, 0), supplyDays: 30, leadDays: 7)
+        env.container.mainContext.insert(m)
+        try env.container.mainContext.save()
+
+        await env.handler.respond(actionIdentifier: "PICKED_UP", categoryIdentifier: "MED_REMINDER",
+                                  kind: "medication", id: m.id.uuidString, deliveredAt: date(2026, 10, 20, 10),
+                                  now: date(2026, 10, 27, 12), calendar: istanbul)
+
+        #expect(m.lastPickupDate == date(2026, 10, 25, 0))
+        #expect(env.center.removeAllCount == 1)
+    }
 }
