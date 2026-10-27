@@ -269,7 +269,7 @@ The planner calculates the text for the **fire date**, not for `now`.
 | Report, days remaining > 1 | "{title} {N} gün sonra bitiyor" | "{person} için. Randevu almayı unutma." |
 | Report, 1 day | "{title} yarın bitiyor" | same |
 | Report, 0 days | "{title} bugün bitiyor" | same |
-| Report, overdue | "{title} süresi doldu" | "{N} gün önce bitti." |
+| Report, overdue | "{title}: süresi doldu" | "{N} gün önce bitti." |
 | Report, handled | "{title}: yeni bitiş tarihini gir" | "Rapor sisteme işlendiyse tarihi kaydet." |
 | Medication, days remaining > 1 | "{name} ilacın {N} gün sonra bitiyor" | "Eczaneden yenisini almayı unutma." |
 | Medication, 1 day | "{name} ilacın yarın bitiyor" | same |

@@ -348,7 +348,7 @@ Copy (spec 7.3, exact). `{N}` is a positive number. The person part is `"{person
 | Report, N > 1 | `"{title} {N} gün sonra bitiyor"` | `"{person} için. Randevu almayı unutma."` | `.reportReminder` |
 | Report, 1 | `"{title} yarın bitiyor"` | same | `.reportReminder` |
 | Report, 0 | `"{title} bugün bitiyor"` | same | `.reportReminder` |
-| Report, overdue | `"{title} süresi doldu"` | `"{N} gün önce bitti."` | `.reportReminder` |
+| Report, overdue | `"{title}: süresi doldu"` | `"{N} gün önce bitti."` | `.reportReminder` |
 | Report, handled | `"{title}: yeni bitiş tarihini gir"` | `"Rapor sisteme işlendiyse tarihi kaydet."` | `.renewalDate` |
 | Medication, N > 1 | `"{name} ilacın {N} gün sonra bitiyor"` | `"Eczaneden yenisini almayı unutma."` | `.medReminder` |
 | Medication, 1 | `"{name} ilacın yarın bitiyor"` | same | `.medReminder` |
@@ -378,7 +378,7 @@ struct NotificationTextTests {
 
     @Test func reportOverdue() {
         #expect(text(report(1, end: end), on: date(2026, 11, 8, 10)) ==
-                NotificationContent(title: "Tansiyon raporu süresi doldu",
+                NotificationContent(title: "Tansiyon raporu: süresi doldu",
                                     body: "3 gün önce bitti.", category: .reportReminder))
     }
 
@@ -520,7 +520,7 @@ struct NotificationPlannerCandidateTests {
         let all = c(report(1, end: date(2026, 11, 5)))
         #expect(all.count == 63)
         #expect(all.last!.fireDate == date(2026, 12, 29, 10))
-        #expect(all.last!.title == "Tansiyon raporu süresi doldu")
+        #expect(all.last!.title == "Tansiyon raporu: süresi doldu")
     }
 
     @Test func handledReportEveryThreeDays() {
