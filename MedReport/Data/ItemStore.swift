@@ -8,11 +8,17 @@ final class ItemStore {
     private let container: ModelContainer
     private let sync: ReminderSync
     private let saveContext: (ModelContext) throws -> Void
+    private let now: () -> Date
+    private let calendar: Calendar
 
     /// `saveContext` is for tests; the default calls `context.save()`.
-    init(container: ModelContainer, sync: ReminderSync, saveContext: ((ModelContext) throws -> Void)? = nil) {
+    /// `now` and `calendar` are what each sync uses; tests pass a fixed clock.
+    init(container: ModelContainer, sync: ReminderSync, saveContext: ((ModelContext) throws -> Void)? = nil,
+         now: @escaping () -> Date = Date.init, calendar: Calendar = .current) {
         self.container = container
         self.sync = sync
+        self.now = now
+        self.calendar = calendar
         self.saveContext = saveContext ?? { try $0.save() }
     }
 
@@ -21,7 +27,7 @@ final class ItemStore {
     /// Save, then sync. On failure: roll back, rethrow, and do not sync.
     func save() async throws {
         try persist()
-        await sync.sync()
+        await sync.sync(now: now(), calendar: calendar)
     }
 
     func markRenewed(_ report: Report, now: Date) async throws {
@@ -31,8 +37,7 @@ final class ItemStore {
 
     func markPickedUp(_ medication: Medication, now: Date, calendar: Calendar) async throws {
         medication.markPickedUp(on: now, calendar: calendar)
-        try persist()
-        await sync.sync(now: now, calendar: calendar)
+        try await save()
     }
 
     func renew(_ report: Report, newEndDate: Date) async throws {

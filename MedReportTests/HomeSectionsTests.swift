@@ -61,13 +61,17 @@ struct HomeSectionsTests {
 
     @Test func sectionsUseTheGivenNow() throws {
         let c = try makeContainer()
-        let r = Report(title: "R", endDate: date(2026, 10, 28))
+        // Both are normal before midnight (the report is closer); after midnight the medication is
+        // reminding (7 days left, lead 7), so the hero changes.
+        let r = Report(title: "R", endDate: date(2026, 11, 3), leadDays: 1)
+        let m = Medication(name: "M", lastPickupDate: date(2026, 10, 5), supplyDays: 30, leadDays: 7)
         c.mainContext.insert(r)
+        c.mainContext.insert(m)
         let before = date(2026, 10, 27, 23, 59)
         let after = date(2026, 10, 28, 0, 1)
-        let s1 = HomeSections.make(reports: [r], medications: [], now: before, calendar: istanbul)
-        let s2 = HomeSections.make(reports: [r], medications: [], now: after, calendar: istanbul)
-        #expect(s1.summary.hero?.daysRemaining(now: before, calendar: istanbul) == 1)
-        #expect(s2.summary.hero?.daysRemaining(now: after, calendar: istanbul) == 0)
+        let s1 = HomeSections.make(reports: [r], medications: [m], now: before, calendar: istanbul)
+        let s2 = HomeSections.make(reports: [r], medications: [m], now: after, calendar: istanbul)
+        #expect(s1.summary.hero?.id == r.id)
+        #expect(s2.summary.hero?.id == m.id)
     }
 }

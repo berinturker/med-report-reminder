@@ -20,12 +20,13 @@ struct ItemStoreTests {
         let scheduler = NotificationScheduler(center: center, calendar: istanbul, isFastModeAllowed: false)
         let sync = ReminderSync(container: container, settings: settings, scheduler: scheduler, language: { .tr })
         return Env(container: container, center: center,
-                   store: ItemStore(container: container, sync: sync, saveContext: saveContext))
+                   store: ItemStore(container: container, sync: sync, saveContext: saveContext,
+                                    now: { date(2026, 10, 27) }, calendar: istanbul))
     }
 
     @Test func saveSyncs() async throws {
         let env = try make()
-        env.store.context.insert(Report(title: "Tansiyon raporu", endDate: date(2099, 11, 5)))
+        env.store.context.insert(Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5)))
         try await env.store.save()
         #expect(!env.center.added.isEmpty)
     }
@@ -38,14 +39,17 @@ struct ItemStoreTests {
         try await env.store.markRenewed(r, now: date(2026, 10, 27, 12))
         #expect(r.snoozeUntil == nil)
         #expect(r.isHandled)
+        #expect(env.center.removeAllCount == 1)
         let ids = env.center.added.map(\.identifier)
-        #expect(ids.allSatisfy { $0.hasPrefix("renewal-") || $0 == "backup" })
+        #expect(ids.first == "renewal-\(r.id.uuidString)-20261030")
+        #expect(ids.last == "backup")
+        #expect(ids.dropLast().allSatisfy { $0.hasPrefix("renewal-\(r.id.uuidString)-") })
     }
 
     @Test func archiveAndRestoreReport() async throws {
         let env = try make()
-        let r = Report(title: "Tansiyon raporu", endDate: date(2099, 11, 5))
-        let m = Medication(name: "Beloc", lastPickupDate: date(2099, 10, 1), supplyDays: 30, leadDays: 7, report: r)
+        let r = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        let m = Medication(name: "Beloc", lastPickupDate: date(2026, 10, 1), supplyDays: 30, leadDays: 7, report: r)
         env.store.context.insert(r)
         env.store.context.insert(m)
         try await env.store.save()
@@ -64,8 +68,8 @@ struct ItemStoreTests {
 
     @Test func deleteReportDeletesItsMedications() async throws {
         let env = try make()
-        let r = Report(title: "Tansiyon raporu", endDate: date(2099, 11, 5))
-        let m = Medication(name: "Beloc", lastPickupDate: date(2099, 10, 1), supplyDays: 30, leadDays: 7, report: r)
+        let r = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        let m = Medication(name: "Beloc", lastPickupDate: date(2026, 10, 1), supplyDays: 30, leadDays: 7, report: r)
         env.store.context.insert(r)
         env.store.context.insert(m)
         try await env.store.save()
