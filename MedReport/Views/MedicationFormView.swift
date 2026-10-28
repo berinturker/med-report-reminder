@@ -20,15 +20,18 @@ struct MedicationFormView: View {
     @State private var didSetDefaults = false
 
     private let medication: Medication?
+    private let isNew: Bool
+    /// A copy for `body`, which must never read the stored model (it can be deleted while a save is in flight).
+    @State private var isArchived: Bool
 
     init(medication: Medication?, preselectedReport: Report?) {
         self.medication = medication
+        isNew = medication == nil
+        _isArchived = State(initialValue: medication?.isArchived ?? false)
         // The settings are not available yet, so the real default is set in `onAppear` for a new medication.
         _model = State(initialValue: MedicationFormModel(medication: medication, preselectedReport: preselectedReport,
                                                          defaultLeadDays: 7, now: Date(), calendar: .current))
     }
-
-    private var isNew: Bool { medication == nil }
 
     /// The active reports, plus the linked one if it is archived, so the picker always has a matching tag.
     private var pickerReports: [Report] {
@@ -100,10 +103,10 @@ struct MedicationFormView: View {
                 }
             }
             if let medication {
-                let trackingLabel: LocalizedStringKey = medication.isArchived ? "Resume tracking" : "Stop tracking"
+                let trackingLabel: LocalizedStringKey = isArchived ? "Resume tracking" : "Stop tracking"
                 Section {
                     Button(trackingLabel) {
-                        Task { await setArchived(medication, !medication.isArchived) }
+                        Task { await setArchived(medication, !isArchived) }
                     }
                     Button("Delete medication", role: .destructive) { showsDeleteConfirmation = true }
                 }
@@ -151,6 +154,7 @@ struct MedicationFormView: View {
     private func setArchived(_ medication: Medication, _ archived: Bool) async {
         do {
             try await store.setArchived(medication, archived)
+            isArchived = archived
             dismiss()
         } catch {
             showsSaveError = true
