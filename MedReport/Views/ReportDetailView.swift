@@ -18,14 +18,14 @@ struct ReportDetailView: View {
 
     private enum DetailSheet: Identifiable {
         case edit, renew, addMedication
-        case medication(Medication)
+        case medication(Medication, id: UUID)
 
         var id: String {
             switch self {
             case .edit: "edit"
             case .renew: "renew"
             case .addMedication: "addMedication"
-            case .medication(let medication): "medication-\(medication.id.uuidString)"
+            case .medication(_, let id): "medication-\(id.uuidString)"
             }
         }
     }
@@ -86,12 +86,12 @@ struct ReportDetailView: View {
             case .edit: ReportFormView(report: report)
             case .renew: RenewalView(report: report)
             case .addMedication: MedicationFormView(medication: nil, preselectedReport: report)
-            case .medication(let medication):
+            case .medication(let medication, _):
                 NavigationStack { MedicationFormView(medication: medication, preselectedReport: nil) }
             }
         }
         .confirmationDialog("Delete this report?", isPresented: $showsDeleteConfirmation, titleVisibility: .visible) {
-            Button("Delete report", role: .destructive) { Task { await delete() } }
+            Button("Delete", role: .destructive) { Task { await delete() } }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("The medications linked to this report are also deleted.")
@@ -138,7 +138,7 @@ struct ReportDetailView: View {
                 Text("Medications").font(Theme.rounded(.headline)).padding(.vertical, 12)
                 ForEach(medications) { medication in
                     let item = ReminderItem(medication: medication, calendar: calendar)
-                    Button { sheet = .medication(medication) } label: {
+                    Button { sheet = .medication(medication, id: medication.id) } label: {
                         HStack {
                             Text(medication.name).foregroundStyle(.primary)
                             Spacer()
