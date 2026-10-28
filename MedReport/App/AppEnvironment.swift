@@ -22,15 +22,32 @@ final class AppEnvironment {
         AppLanguage.current(preferredLanguages: Locale.preferredLanguages)
     }
 
+    /// True in the app process that hosts the unit tests (`XCTestConfigurationFilePath` is set).
+    nonisolated static var isHostingUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// True when the app was launched with the argument "-uiTesting".
+    nonisolated static var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTesting")
+    }
+
     private init() {
+        // UI tests use an in-memory store and their own settings, so they never touch real data.
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: Self.isUITesting, cloudKitDatabase: .none)
         do {
             container = try ModelContainer(for: Schema(versionedSchema: SchemaV1.self),
                                            migrationPlan: MedReportMigrationPlan.self,
-                                           configurations: ModelConfiguration())
+                                           configurations: configuration)
         } catch {
             fatalError("Could not open the data store: \(error)")
         }
-        settings = AppSettings(defaults: .standard)
+        if Self.isUITesting {
+            UserDefaults.standard.removePersistentDomain(forName: "uiTesting")
+            settings = AppSettings(defaults: UserDefaults(suiteName: "uiTesting") ?? .standard)
+        } else {
+            settings = AppSettings(defaults: .standard)
+        }
         router = NavigationRouter()
         #if DEBUG
         let fastModeAllowed = true

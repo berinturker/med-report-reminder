@@ -7,6 +7,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        // The unit tests use the app as a host; they must not open the real store or notifications.
+        if AppEnvironment.isHostingUnitTests { return true }
         // The delegate must be set before launch completes, or iOS does not deliver the action.
         UNUserNotificationCenter.current().delegate = self
         let environment = AppEnvironment.shared

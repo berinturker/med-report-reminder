@@ -4,21 +4,34 @@ import SwiftUI
 @main
 struct MedReportApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
-        let environment = AppEnvironment.shared
         WindowGroup {
-            HomeView()
-                .environment(environment.store)
-                .environment(environment.router)
-                .environment(environment.settings)
-        }
-        .modelContainer(environment.container)
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                Task { await AppEnvironment.shared.sync.sync() }
+            // The unit test host shows an empty view, so `AppEnvironment.shared` is never created.
+            if AppEnvironment.isHostingUnitTests {
+                Color.clear
+            } else {
+                AppRootView()
             }
         }
+    }
+}
+
+/// The real app content, with the shared objects of `AppEnvironment`.
+private struct AppRootView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    private let environment = AppEnvironment.shared
+
+    var body: some View {
+        HomeView()
+            .environment(environment.store)
+            .environment(environment.router)
+            .environment(environment.settings)
+            .modelContainer(environment.container)
+            .onChange(of: scenePhase) { _, phase in
+                if phase == .active {
+                    Task { await environment.sync.sync() }
+                }
+            }
     }
 }

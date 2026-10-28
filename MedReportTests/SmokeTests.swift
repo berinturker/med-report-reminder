@@ -6,5 +6,6 @@ import Testing
 struct SmokeTests {
     @Test func appModuleLoads() {
         #expect(Bundle.main.bundleIdentifier != nil)
+        #expect(AppEnvironment.isHostingUnitTests)
     }
 }

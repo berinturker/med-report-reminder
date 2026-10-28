@@ -12,10 +12,10 @@ Items that the final reviews found and that were deferred. Each later plan check
 
 ## From Plan 2 (app shell and notifications)
 
-- **Plan 3 must do:** a tap on a notification for a deleted item routes to that id; screens fall back to Home when the id does not exist.
 - The scheduler uses `Calendar.autoupdatingCurrent` and the sync uses `Calendar.current`; pass one calendar per sync.
-- The hosted test app creates `AppEnvironment.shared` (on-disk store, real notification center); skip it under XCTest.
 - Old delivered notifications keep "Renewed" and "In 3 hours"; consider removing delivered notifications of handled items.
-- The significant-time-change observer is on a view; use `applicationSignificantTimeChange(_:)`.
 - When permission is denied, each sync logs 64 errors; check `authorizationStatus` first.
-- `ModelConfiguration()` defaults `cloudKitDatabase` to `.automatic`; set `.none` until iCloud sync is a decision.
+
+## From Plan 3 (screens)
+
+- Notification tap routing (live item → detail, deleted item → Home) is covered only by unit tests; check it on a real iPhone.
