@@ -15,6 +15,8 @@ struct MedicationFormView: View {
     @State private var showsDeleteConfirmation = false
     @State private var showsSaveError = false
     @State private var isSaving = false
+    /// Set after a successful delete, so `body` stops reading the deleted model before the dismiss lands.
+    @State private var isDeleted = false
     @State private var didSetDefaults = false
 
     private let medication: Medication?
@@ -39,7 +41,9 @@ struct MedicationFormView: View {
     var body: some View {
         let title: LocalizedStringKey = isNew ? "New medication" : "Edit medication"
         Group {
-            if isNew {
+            if isDeleted {
+                Color.clear
+            } else if isNew {
                 NavigationStack { form.navigationTitle(title).toolbar { toolbar } }
             } else {
                 form.navigationTitle(title).toolbar { toolbar }
@@ -96,8 +100,9 @@ struct MedicationFormView: View {
                 }
             }
             if let medication {
+                let trackingLabel: LocalizedStringKey = medication.isArchived ? "Resume tracking" : "Stop tracking"
                 Section {
-                    Button(medication.isArchived ? "Resume tracking" : "Stop tracking") {
+                    Button(trackingLabel) {
                         Task { await setArchived(medication, !medication.isArchived) }
                     }
                     Button("Delete medication", role: .destructive) { showsDeleteConfirmation = true }
@@ -155,6 +160,8 @@ struct MedicationFormView: View {
     private func delete(_ medication: Medication) async {
         do {
             try await store.delete(medication)
+            // Hide the form first: the model is gone, so `body` must not read it again.
+            isDeleted = true
             dismiss()
         } catch {
             showsSaveError = true

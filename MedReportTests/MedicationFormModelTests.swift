@@ -94,4 +94,13 @@ struct MedicationFormModelTests {
         #expect(existing.name == "M")
         #expect(existing.supplyDays == 30)
     }
+
+    @Test func applyStoresPickupAsStartOfDay() throws {
+        let container = try makeContainer()
+        let model = newModel()
+        model.name = "M"
+        model.lastPickupDate = date(2026, 10, 20, 15, 30)
+        let med = model.apply(to: container.mainContext, calendar: istanbul)
+        #expect(med.lastPickupDate == istanbul.startOfDay(for: date(2026, 10, 20, 15, 30)))
+    }
 }
