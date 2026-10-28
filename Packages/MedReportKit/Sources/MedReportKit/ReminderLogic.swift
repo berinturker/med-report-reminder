@@ -36,6 +36,22 @@ public enum ReminderLogic {
         return state(daysRemaining: remaining, leadDays: leadDays, isHandled: isHandled)
     }
 
+    // MARK: - Progress
+
+    /// Part of the reminder period that is past, 0...1. Normal → 0, overdue → 1, handled → 1.
+    public static func reminderProgress(endDate: Date, leadDays: Int, isHandled: Bool, now: Date, calendar: Calendar) -> Double {
+        let remaining = daysRemaining(until: endDate, now: now, calendar: calendar)
+        switch state(daysRemaining: remaining, leadDays: leadDays, isHandled: isHandled) {
+        case .normal: return 0
+        case .overdue, .handled: return 1
+        case .reminding:
+            let lead = max(leadDays, 0)
+            // With no lead days the reminding state is day 0 only.
+            if lead == 0 { return 1 }
+            return Double(lead - remaining) / Double(lead)
+        }
+    }
+
     // MARK: - Derived dates
 
     /// The day the supply ends: last pickup day + supply days.
