@@ -134,6 +134,8 @@ struct HomeView: View {
                     .foregroundStyle(.primary)
                     .frame(minHeight: 44)
             }
+            // Color shows only the state; the disclosure chevron and label stay neutral.
+            .tint(.primary)
             .padding(.horizontal, 16)
         }
     }
@@ -175,6 +177,8 @@ struct HomeView: View {
                 .background(Color.primary, in: Circle())
                 .shadow(radius: 4, y: 2)
         }
+        // Keep "Add report" first; a menu near the bottom edge reverses its order by default.
+        .menuOrder(.fixed)
         .accessibilityLabel(Text("Add"))
         .padding(20)
     }
