@@ -87,7 +87,20 @@ struct ReportDetailView: View {
             case .renew: RenewalView(report: report)
             case .addMedication: MedicationFormView(medication: nil, preselectedReport: report)
             case .medication(let medication, _):
-                NavigationStack { MedicationFormView(medication: medication, preselectedReport: nil) }
+                // Deleting the medication re-renders this view while the sync runs; the deleted model must not be read.
+                if medication.isDeleted || medication.modelContext == nil {
+                    Color.clear
+                } else {
+                    NavigationStack {
+                        MedicationFormView(medication: medication, preselectedReport: nil)
+                            .toolbar {
+                                // As a sheet, an existing medication needs a visible way out, not only a swipe.
+                                ToolbarItem(placement: .cancellationAction) {
+                                    Button("Cancel") { self.sheet = nil }
+                                }
+                            }
+                    }
+                }
             }
         }
         .confirmationDialog("Delete this report?", isPresented: $showsDeleteConfirmation, titleVisibility: .visible) {
@@ -132,7 +145,10 @@ struct ReportDetailView: View {
 
     @ViewBuilder
     private func medicationsSection(now: Date, calendar: Calendar) -> some View {
-        let medications = (report.medications ?? []).sorted { $0.name < $1.name }
+        // Filter out a just-deleted medication before reading any of its values.
+        let medications = (report.medications ?? [])
+            .filter { !$0.isDeleted && $0.modelContext != nil }
+            .sorted { $0.name < $1.name }
         if !medications.isEmpty {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Medications").font(Theme.rounded(.headline)).padding(.vertical, 12)

@@ -24,6 +24,8 @@ private struct AppRootView: View {
 
     var body: some View {
         HomeView()
+            // Color shows only the state; other buttons are plain (spec 9.1). Sheets inherit it.
+            .tint(.primary)
             .environment(environment.store)
             .environment(environment.router)
             .environment(environment.settings)
