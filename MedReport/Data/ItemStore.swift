@@ -9,12 +9,13 @@ final class ItemStore {
     private let sync: ReminderSync
     private let saveContext: (ModelContext) throws -> Void
     private let now: () -> Date
-    private let calendar: Calendar
+    private let calendar: () -> Calendar
 
     /// `saveContext` is for tests; the default calls `context.save()`.
-    /// `now` and `calendar` are what each sync uses; tests pass a fixed clock.
+    /// `now` and `calendar` are read on each sync, so a time zone change reaches the next save
+    /// (spec 13); tests pass a fixed clock and calendar.
     init(container: ModelContainer, sync: ReminderSync, saveContext: ((ModelContext) throws -> Void)? = nil,
-         now: @escaping () -> Date = Date.init, calendar: Calendar = .current) {
+         now: @escaping () -> Date = Date.init, calendar: @escaping () -> Calendar = { .autoupdatingCurrent }) {
         self.container = container
         self.sync = sync
         self.now = now
@@ -27,7 +28,7 @@ final class ItemStore {
     /// Save, then sync. On failure: roll back, rethrow, and do not sync.
     func save() async throws {
         try persist()
-        await sync.sync(now: now(), calendar: calendar)
+        await sync.sync(now: now(), calendar: calendar())
     }
 
     func markRenewed(_ report: Report, now: Date) async throws {

@@ -44,7 +44,12 @@ final class ReportFormModel {
         if let report = original {
             report.title = title
             report.personName = person
-            report.endDate = endDate
+            if report.isHandled && report.endDate != endDate {
+                // A new end date on a handled report is the renewal: a new cycle starts (spec 8.5).
+                report.renew(newEndDate: endDate)
+            } else {
+                report.endDate = endDate
+            }
             report.leadDays = leadDays
             report.notes = notes
             return report

@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     /// Midnight, time zone, date or clock change (spec 5.4, 13).
     func applicationSignificantTimeChange(_ application: UIApplication) {
+        if AppEnvironment.isHostingUnitTests { return }
         Task { await AppEnvironment.shared.sync.sync() }
     }
 

@@ -104,4 +104,32 @@ struct ReportFormModelTests {
         #expect(usages.count == 2)
         _ = container
     }
+
+    @Test func changingTheEndDateOfAHandledReportStartsANewCycle() throws {
+        let container = try makeContainer()
+        let report = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        report.markHandled(at: date(2026, 10, 27))
+        report.snoozeUntil = date(2026, 10, 27, 18)
+        container.mainContext.insert(report)
+        let model = ReportFormModel(report: report, defaultLeadDays: 21, now: now, calendar: istanbul)
+        model.endDate = date(2027, 11, 5)
+        model.apply(to: container.mainContext)
+        #expect(!report.isHandled)
+        #expect(report.handledAt == nil)
+        #expect(report.snoozeUntil == nil)
+        #expect(report.endDate == date(2027, 11, 5))
+    }
+
+    @Test func editingAHandledReportWithoutANewEndDateKeepsItHandled() throws {
+        let container = try makeContainer()
+        let report = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
+        report.markHandled(at: date(2026, 10, 27))
+        container.mainContext.insert(report)
+        let model = ReportFormModel(report: report, defaultLeadDays: 21, now: now, calendar: istanbul)
+        model.title = "Şeker raporu"
+        model.apply(to: container.mainContext)
+        #expect(report.isHandled)
+        #expect(report.handledAt == date(2026, 10, 27))
+        #expect(report.title == "Şeker raporu")
+    }
 }

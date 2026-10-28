@@ -21,7 +21,7 @@ struct ItemStoreTests {
         let sync = ReminderSync(container: container, settings: settings, scheduler: scheduler, language: { .tr })
         return Env(container: container, center: center,
                    store: ItemStore(container: container, sync: sync, saveContext: saveContext,
-                                    now: { date(2026, 10, 27) }, calendar: istanbul))
+                                    now: { date(2026, 10, 27) }, calendar: { istanbul }))
     }
 
     @Test func saveSyncs() async throws {
@@ -86,5 +86,20 @@ struct ItemStoreTests {
         await #expect(throws: CocoaError.self) { try await env.store.save() }
         #expect(try env.store.context.fetchCount(FetchDescriptor<Report>()) == 0)
         #expect(env.center.removeAllCount == 0)
+    }
+
+    @Test func eachSyncReadsTheCurrentCalendar() async throws {
+        // A time zone change after launch must reach the next sync (spec 13).
+        let container = try makeContainer()
+        let center = FakeNotificationCenter()
+        let settings = AppSettings(defaults: UserDefaults(suiteName: "test-\(UUID().uuidString)")!)
+        let scheduler = NotificationScheduler(center: center, calendar: istanbul, isFastModeAllowed: false)
+        let sync = ReminderSync(container: container, settings: settings, scheduler: scheduler, language: { .tr })
+        var reads = 0
+        let store = ItemStore(container: container, sync: sync, saveContext: nil,
+                              now: { date(2026, 10, 27) }, calendar: { reads += 1; return istanbul })
+        try await store.save()
+        try await store.save()
+        #expect(reads == 2)
     }
 }

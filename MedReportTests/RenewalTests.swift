@@ -24,7 +24,7 @@ struct RenewalTests {
         let scheduler = NotificationScheduler(center: center, calendar: istanbul, isFastModeAllowed: false)
         let sync = ReminderSync(container: container, settings: settings, scheduler: scheduler, language: { .tr })
         let store = ItemStore(container: container, sync: sync, saveContext: nil,
-                              now: { date(2026, 10, 27) }, calendar: istanbul)
+                              now: { date(2026, 10, 27) }, calendar: { istanbul })
         let report = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 5))
         report.markHandled(at: date(2026, 10, 27))
         report.snoozeUntil = date(2026, 10, 27, 15)
