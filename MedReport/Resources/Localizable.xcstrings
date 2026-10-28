@@ -1,0 +1,16 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Reminders" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hatırlatmalar"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
