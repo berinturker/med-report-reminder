@@ -41,12 +41,52 @@
         }
       }
     },
+    "Add" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ekle"
+          }
+        }
+      }
+    },
     "Add medication" : {
       "localizations" : {
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "İlaç ekle"
+          }
+        }
+      }
+    },
+    "Add report" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rapor ekle"
+          }
+        }
+      }
+    },
+    "Add your first report" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlk raporunu ekle"
+          }
+        }
+      }
+    },
+    "Archive (%lld)" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arşiv (%lld)"
           }
         }
       }
@@ -251,6 +291,16 @@
         }
       }
     },
+    "Medications without a report" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raporsuz ilaçlar"
+          }
+        }
+      }
+    },
     "New end date" : {
       "localizations" : {
         "tr" : {
@@ -311,6 +361,16 @@
         }
       }
     },
+    "Picked up" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aldım"
+          }
+        }
+      }
+    },
     "Please try again." : {
       "localizations" : {
         "tr" : {
@@ -357,6 +417,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rapor adı"
+          }
+        }
+      }
+    },
+    "Reports" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raporlar"
           }
         }
       }

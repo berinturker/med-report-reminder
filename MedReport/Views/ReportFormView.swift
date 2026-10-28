@@ -47,7 +47,7 @@ struct ReportFormView: View {
                         .lineLimit(3...6)
                 }
             }
-            .navigationTitle(isNew ? "New report" : "Edit report")
+            .navigationTitle(isNew ? LocalizedStringKey("New report") : LocalizedStringKey("Edit report"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -38,6 +38,9 @@ struct PrimaryPillButtonStyle: ButtonStyle {
         configuration.label
             .font(Theme.rounded(.headline, weight: .semibold))
             .foregroundStyle(Color(.systemBackground))
+            .multilineTextAlignment(.center)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: 50)
             .background(Color.primary, in: Capsule())
             .opacity(configuration.isPressed ? 0.8 : 1)

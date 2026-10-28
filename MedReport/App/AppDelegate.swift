@@ -15,6 +15,11 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
         return true
     }
 
+    /// Midnight, time zone, date or clock change (spec 5.4, 13).
+    func applicationSignificantTimeChange(_ application: UIApplication) {
+        Task { await AppEnvironment.shared.sync.sync() }
+    }
+
     /// A button or a tap on a notification (spec 8.3).
     /// iOS requires the completion handler on the main thread: the `async` form of this method
     /// calls it from a background thread and crashed on a real iPhone ("Call must be made on main

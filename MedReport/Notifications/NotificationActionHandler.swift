@@ -107,10 +107,10 @@ final class NotificationActionHandler {
     }
 
     private func report(_ id: UUID) -> Report? {
-        try? container.mainContext.fetch(FetchDescriptor<Report>(predicate: #Predicate { $0.id == id })).first
+        Report.find(id, in: container.mainContext)
     }
 
     private func medication(_ id: UUID) -> Medication? {
-        try? container.mainContext.fetch(FetchDescriptor<Medication>(predicate: #Predicate { $0.id == id })).first
+        Medication.find(id, in: container.mainContext)
     }
 }

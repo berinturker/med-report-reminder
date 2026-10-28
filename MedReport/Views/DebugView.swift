@@ -1,43 +1,49 @@
+#if DEBUG
 import SwiftUI
 import UserNotifications
 
-/// Temporary debug screen until Plan 3 adds the real screens.
-/// It shows the pending notifications and lets the developer test the notification flow.
-struct PlaceholderView: View {
+/// Developer screen, only in debug builds. It shows the pending notifications and lets the
+/// developer test the notification flow. Its text is not translated.
+struct DebugView: View {
     struct PendingRow: Identifiable, Sendable {
         let id: String
         let fireDate: Date?
     }
 
+    @Environment(ItemStore.self) private var store
+    @Environment(AppSettings.self) private var settings
     @State private var rows: [PendingRow] = []
-    @State private var fastMode = AppEnvironment.shared.settings.isFastModeOn
+    @State private var fastMode = false
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
-                    Button("Request permission") { Task { await requestPermission() } }
-                    Button("Add sample report") { Task { await addSampleReport() } }
-                    #if DEBUG
-                    Toggle("Fast mode (1 day = 1 minute)", isOn: $fastMode)
+                    Button { Task { await requestPermission() } } label: { Text(verbatim: "Request permission") }
+                    Button { Task { await addSampleReport() } } label: { Text(verbatim: "Add sample report") }
+                    Toggle(isOn: $fastMode) { Text(verbatim: "Fast mode (1 day = 1 minute)") }
                         .onChange(of: fastMode) { _, on in
-                            AppEnvironment.shared.settings.isFastModeOn = on
-                            Task { await AppEnvironment.shared.sync.sync(); await reload() }
+                            guard settings.isFastModeOn != on else { return }
+                            settings.isFastModeOn = on
+                            Task { try? await store.save(); await reload() }
                         }
-                    #endif
-                    Button("Refresh") { Task { await reload() } }
+                    Button { Task { await reload() } } label: { Text(verbatim: "Refresh") }
                 }
-                Section("Pending notifications: \(rows.count)") {
+                Section {
                     ForEach(rows) { row in
                         VStack(alignment: .leading) {
-                            Text(row.id).font(.caption.monospaced())
-                            Text(row.fireDate.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "-")
+                            Text(verbatim: row.id).font(.caption.monospaced())
+                            Text(verbatim: row.fireDate.map { $0.formatted(date: .abbreviated, time: .shortened) } ?? "-")
                                 .font(.caption)
                         }
                     }
+                } header: {
+                    Text(verbatim: "Pending notifications: \(rows.count)")
                 }
             }
-            .navigationTitle("MedReport")
+            .navigationTitle(Text(verbatim: "Debug"))
+            .navigationBarTitleDisplayMode(.inline)
+            .onAppear { fastMode = settings.isFastModeOn }
             .task { await reload() }
         }
     }
@@ -48,15 +54,14 @@ struct PlaceholderView: View {
                 continuation.resume()
             }
         }
-        await AppEnvironment.shared.sync.sync()
+        try? await store.save()
         await reload()
     }
 
     private func addSampleReport() async {
-        let environment = AppEnvironment.shared
         let end = Calendar.current.date(byAdding: .day, value: 10, to: Date()) ?? Date()
-        environment.container.mainContext.insert(Report(title: "Sample report", endDate: end))
-        try? await environment.store.save()
+        store.context.insert(Report(title: "Sample report", endDate: end))
+        try? await store.save()
         await reload()
     }
 
@@ -73,3 +78,4 @@ struct PlaceholderView: View {
         }
     }
 }
+#endif
