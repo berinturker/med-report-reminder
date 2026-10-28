@@ -91,6 +91,16 @@
         }
       }
     },
+    "Delete report" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Raporu sil"
+          }
+        }
+      }
+    },
     "Delete this medication?" : {
       "localizations" : {
         "tr" : {
@@ -101,12 +111,32 @@
         }
       }
     },
+    "Delete this report?" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu rapor silinsin mi?"
+          }
+        }
+      }
+    },
     "Dosage note" : {
       "localizations" : {
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Doz notu"
+          }
+        }
+      }
+    },
+    "Edit" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Düzenle"
           }
         }
       }
@@ -137,6 +167,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bitiş tarihi"
+          }
+        }
+      }
+    },
+    "Enter date" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tarihi gir"
+          }
+        }
+      }
+    },
+    "Enter the new end date" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni bitiş tarihini gir"
           }
         }
       }
@@ -187,6 +237,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "İlaç adı"
+          }
+        }
+      }
+    },
+    "Medications" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlaçlar"
+          }
+        }
+      }
+    },
+    "New end date" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni bitiş tarihi"
           }
         }
       }
@@ -271,6 +341,16 @@
         }
       }
     },
+    "Renewed" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeniledim"
+          }
+        }
+      }
+    },
     "Report name" : {
       "localizations" : {
         "tr" : {
@@ -321,12 +401,32 @@
         }
       }
     },
+    "The medications linked to this report are also deleted." : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu rapora bağlı ilaçlar da silinir."
+          }
+        }
+      }
+    },
     "This report looks expired. Save anyway?" : {
       "localizations" : {
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bu rapor bitmiş görünüyor, yine de kaydedilsin mi?"
+          }
+        }
+      }
+    },
+    "Tracking stopped" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takip durduruldu"
           }
         }
       }
