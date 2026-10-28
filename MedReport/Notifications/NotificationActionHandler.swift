@@ -82,7 +82,6 @@ final class NotificationActionHandler {
         case (.renewed, .report):
             guard let report = report(ref.id) else { return }
             report.markHandled(at: now)
-            report.snoozeUntil = nil
         case (.pickedUp, .medication):
             guard let medication = medication(ref.id) else { return }
             if let deliveredAt, medication.lastPickupDate >= calendar.startOfDay(for: deliveredAt) {

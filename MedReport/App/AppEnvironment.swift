@@ -15,6 +15,7 @@ final class AppEnvironment {
     let scheduler: NotificationScheduler
     let sync: ReminderSync
     let actions: NotificationActionHandler
+    let store: ItemStore
 
     /// The device language selects the app language (spec D10).
     static var currentLanguage: AppLanguage {
@@ -43,12 +44,7 @@ final class AppEnvironment {
                             language: { AppEnvironment.currentLanguage },
                             beginBackgroundTask: AppEnvironment.beginBackgroundTask)
         actions = NotificationActionHandler(container: container, sync: sync, router: router)
-    }
-
-    /// Every save in the app goes through this method, so a sync follows each save (spec 5.4).
-    func saveAndSync() async throws {
-        try container.mainContext.save()
-        await sync.sync()
+        store = ItemStore(container: container, sync: sync)
     }
 
     /// Holds one background task id, so the end function and the expiration handler share it.

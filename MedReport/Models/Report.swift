@@ -39,6 +39,7 @@ extension SchemaV1 {
         func markHandled(at date: Date) {
             isHandled = true
             handledAt = date
+            snoozeUntil = nil
         }
 
         /// The user entered the new end date: a new cycle starts (spec 8.5).

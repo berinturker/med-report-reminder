@@ -56,7 +56,7 @@ struct PlaceholderView: View {
         let environment = AppEnvironment.shared
         let end = Calendar.current.date(byAdding: .day, value: 10, to: Date()) ?? Date()
         environment.container.mainContext.insert(Report(title: "Sample report", endDate: end))
-        try? await environment.saveAndSync()
+        try? await environment.store.save()
         await reload()
     }
 

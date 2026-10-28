@@ -64,6 +64,10 @@ struct ModelTests {
     }
 
     @Test func pickupAndRenewClearSnooze() {
+        let h = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 1))
+        h.snoozeUntil = date(2026, 10, 27, 15)
+        h.markHandled(at: date(2026, 10, 27, 12))
+        #expect(h.snoozeUntil == nil)
         let r = Report(title: "Tansiyon raporu", endDate: date(2026, 11, 1))
         r.snoozeUntil = date(2026, 10, 27, 15)
         r.renew(newEndDate: date(2027, 11, 1))
