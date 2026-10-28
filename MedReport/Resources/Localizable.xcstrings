@@ -41,6 +41,16 @@
         }
       }
     },
+    "Add medication" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlaç ekle"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "tr" : {
@@ -57,6 +67,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaydedilemedi"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sil"
+          }
+        }
+      }
+    },
+    "Delete medication" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlacı sil"
+          }
+        }
+      }
+    },
+    "Delete this medication?" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu ilaç silinsin mi?"
+          }
+        }
+      }
+    },
+    "Dosage note" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doz notu"
+          }
+        }
+      }
+    },
+    "Edit medication" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlacı düzenle"
           }
         }
       }
@@ -81,6 +141,16 @@
         }
       }
     },
+    "Estimated end: %@" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tahmini bitiş: %@"
+          }
+        }
+      }
+    },
     "For whom" : {
       "localizations" : {
         "tr" : {
@@ -91,12 +161,62 @@
         }
       }
     },
+    "Last pickup date" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Son alım tarihi"
+          }
+        }
+      }
+    },
+    "Linked report" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bağlı rapor"
+          }
+        }
+      }
+    },
+    "Medication name" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "İlaç adı"
+          }
+        }
+      }
+    },
+    "New medication" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yeni ilaç"
+          }
+        }
+      }
+    },
     "New report" : {
       "localizations" : {
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yeni rapor"
+          }
+        }
+      }
+    },
+    "None" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yok"
           }
         }
       }
@@ -161,12 +281,42 @@
         }
       }
     },
+    "Resume tracking" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takibi yeniden başlat"
+          }
+        }
+      }
+    },
     "Save" : {
       "localizations" : {
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kaydet"
+          }
+        }
+      }
+    },
+    "Stop tracking" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Takibi durdur"
+          }
+        }
+      }
+    },
+    "Supply (days)" : {
+      "localizations" : {
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kaç günlük"
           }
         }
       }
