@@ -7,12 +7,20 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
+        // The unit tests use the app as a host; they must not open the real store or notifications.
+        if AppEnvironment.isHostingUnitTests { return true }
         // The delegate must be set before launch completes, or iOS does not deliver the action.
         UNUserNotificationCenter.current().delegate = self
         let environment = AppEnvironment.shared
         environment.registerCategories()
         Task { await environment.sync.sync() }
         return true
+    }
+
+    /// Midnight, time zone, date or clock change (spec 5.4, 13).
+    func applicationSignificantTimeChange(_ application: UIApplication) {
+        if AppEnvironment.isHostingUnitTests { return }
+        Task { await AppEnvironment.shared.sync.sync() }
     }
 
     /// A button or a tap on a notification (spec 8.3).

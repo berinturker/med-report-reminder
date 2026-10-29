@@ -82,7 +82,6 @@ final class NotificationActionHandler {
         case (.renewed, .report):
             guard let report = report(ref.id) else { return }
             report.markHandled(at: now)
-            report.snoozeUntil = nil
         case (.pickedUp, .medication):
             guard let medication = medication(ref.id) else { return }
             if let deliveredAt, medication.lastPickupDate >= calendar.startOfDay(for: deliveredAt) {
@@ -108,10 +107,10 @@ final class NotificationActionHandler {
     }
 
     private func report(_ id: UUID) -> Report? {
-        try? container.mainContext.fetch(FetchDescriptor<Report>(predicate: #Predicate { $0.id == id })).first
+        Report.find(id, in: container.mainContext)
     }
 
     private func medication(_ id: UUID) -> Medication? {
-        try? container.mainContext.fetch(FetchDescriptor<Medication>(predicate: #Predicate { $0.id == id })).first
+        Medication.find(id, in: container.mainContext)
     }
 }

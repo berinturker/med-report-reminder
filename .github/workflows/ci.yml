@@ -20,5 +20,7 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
+      - name: Check strings
+        run: python3 scripts/check-strings.py
       - name: Run app tests
         run: ./scripts/ci-app-tests.sh

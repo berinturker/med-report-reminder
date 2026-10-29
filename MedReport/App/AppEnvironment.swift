@@ -15,21 +15,39 @@ final class AppEnvironment {
     let scheduler: NotificationScheduler
     let sync: ReminderSync
     let actions: NotificationActionHandler
+    let store: ItemStore
 
     /// The device language selects the app language (spec D10).
     static var currentLanguage: AppLanguage {
         AppLanguage.current(preferredLanguages: Locale.preferredLanguages)
     }
 
+    /// True in the app process that hosts the unit tests (`XCTestConfigurationFilePath` is set).
+    nonisolated static var isHostingUnitTests: Bool {
+        ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    }
+
+    /// True when the app was launched with the argument "-uiTesting".
+    nonisolated static var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTesting")
+    }
+
     private init() {
+        // UI tests use an in-memory store and their own settings, so they never touch real data.
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: Self.isUITesting, cloudKitDatabase: .none)
         do {
             container = try ModelContainer(for: Schema(versionedSchema: SchemaV1.self),
                                            migrationPlan: MedReportMigrationPlan.self,
-                                           configurations: ModelConfiguration())
+                                           configurations: configuration)
         } catch {
             fatalError("Could not open the data store: \(error)")
         }
-        settings = AppSettings(defaults: .standard)
+        if Self.isUITesting {
+            UserDefaults.standard.removePersistentDomain(forName: "uiTesting")
+            settings = AppSettings(defaults: UserDefaults(suiteName: "uiTesting") ?? .standard)
+        } else {
+            settings = AppSettings(defaults: .standard)
+        }
         router = NavigationRouter()
         #if DEBUG
         let fastModeAllowed = true
@@ -43,12 +61,7 @@ final class AppEnvironment {
                             language: { AppEnvironment.currentLanguage },
                             beginBackgroundTask: AppEnvironment.beginBackgroundTask)
         actions = NotificationActionHandler(container: container, sync: sync, router: router)
-    }
-
-    /// Every save in the app goes through this method, so a sync follows each save (spec 5.4).
-    func saveAndSync() async throws {
-        try container.mainContext.save()
-        await sync.sync()
+        store = ItemStore(container: container, sync: sync)
     }
 
     /// Holds one background task id, so the end function and the expiration handler share it.
